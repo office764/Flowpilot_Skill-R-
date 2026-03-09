@@ -1,0 +1,589 @@
+{
+  "name": "[FlowPilot] Kie.ai UGC 대량생산 파이프라인 v1",
+  "nodes": [
+    {
+      "parameters": {
+        "event": "rowAdded"
+      },
+      "id": "trigger-1",
+      "name": "Google Sheets Trigger",
+      "type": "n8n-nodes-base.googleSheetsTrigger",
+      "typeVersion": 1,
+      "position": [0, 300]
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            {
+              "id": "assign-1",
+              "name": "brand_name",
+              "value": "={{ $json.brand_name }}",
+              "type": "string"
+            },
+            {
+              "id": "assign-2",
+              "name": "product_name",
+              "value": "={{ $json.product_name }}",
+              "type": "string"
+            },
+            {
+              "id": "assign-3",
+              "name": "target_audience",
+              "value": "={{ $json.target_audience }}",
+              "type": "string"
+            },
+            {
+              "id": "assign-4",
+              "name": "style_keyword",
+              "value": "={{ $json.style_keyword }}",
+              "type": "string"
+            },
+            {
+              "id": "assign-5",
+              "name": "video_concept",
+              "value": "={{ $json.video_concept }}",
+              "type": "string"
+            },
+            {
+              "id": "assign-6",
+              "name": "row_number",
+              "value": "={{ $json.row_number }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": false
+      },
+      "id": "set-1",
+      "name": "변수 세팅",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [220, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": "={{ $env.ANTHROPIC_API_KEY }}"
+            },
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"claude-sonnet-4-20250514\",\n  \"max_tokens\": 2048,\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"You are a UGC content prompt engineer for AI image and video generation. Generate prompts for the following brief:\\n\\nBrand: {{ $json.brand_name }}\\nProduct: {{ $json.product_name }}\\nTarget: {{ $json.target_audience }}\\nStyle: {{ $json.style_keyword }}\\nConcept: {{ $json.video_concept }}\\n\\nReturn a JSON object with exactly these keys:\\n1. image_prompt: A detailed photorealistic prompt for GPT-Image-1 to generate a keyframe image. Include real camera model (Sony A7R V, Canon EOS R5, etc), real lens model with aperture (Sony FE 85mm f/1.4 GM, etc), color temperature in Kelvin, ISO/film grain level, lighting setup, composition details. Must include 'hyper-realistic photorealistic photograph indistinguishable from real DSLR photo, ultra-detailed skin texture with visible pores and micro skin imperfections and fine peach fuzz hair and natural skin blemishes, real human skin subsurface scattering with natural blood vessel undertones, individual hair strands visible with natural flyaway hairs, eyes with detailed iris fibers and natural eye moisture reflection, natural asymmetric facial features, visible fingernail texture with natural nail ridges and cuticle detail, natural body hair on arms and legs visible under light, realistic ear canal detail and ear lobe texture, natural lip texture with visible lip lines, shot on real camera sensor with natural lens aberration and chromatic fringing, realistic depth of field with optical bokeh, natural film grain, absolutely ZERO artificial smooth airbrushed plastic skin, ZERO uncanny valley effect, ZERO CGI render look, ZERO digital art style, ZERO perfect symmetry, must pass as genuine unedited photograph'.\\n2. video_prompt: A detailed prompt for Veo 3 to animate the keyframe into a 5-8 second video clip. Include camera movement (dolly/pan/tilt/orbit), subject motion, mood, tempo. Must include 'hyper-realistic footage indistinguishable from real cinema camera capture, ultra-detailed skin with visible pores and micro expressions and natural skin texture movement during motion, realistic hair physics with individual strands responding to movement and gravity, natural subtle body micro-movements like breathing pulse and muscle tension shifts and weight distribution changes, realistic eye movement with natural blink rate and eye moisture and pupil dilation, fabric physics responding realistically to body movement, natural motion blur consistent with real camera shutter speed, absolutely ZERO artificial smooth plastic skin, ZERO uncanny valley, ZERO AI-generated look, ZERO robotic stiff movement, must pass as genuine footage from professional cinema camera'.\\n3. negative_prompt: Keywords to avoid (smooth skin, plastic, CGI, 3D render, cartoon, anime, perfect symmetry, airbrushed, digital art, illustration).\\n\\nReturn ONLY valid JSON, no markdown, no code fences.\"\n    }\n  ]\n}"
+      },
+      "id": "http-1",
+      "name": "AI 프롬프트 생성 (Claude)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [440, 300]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const items = $input.all();\nconst results = [];\n\nfor (const item of items) {\n  const responseText = item.json.content[0].text;\n  let parsed;\n  try {\n    parsed = JSON.parse(responseText);\n  } catch (e) {\n    const jsonMatch = responseText.match(/\\{[\\s\\S]*\\}/);\n    if (jsonMatch) {\n      parsed = JSON.parse(jsonMatch[0]);\n    } else {\n      throw new Error('Claude response is not valid JSON: ' + responseText.substring(0, 200));\n    }\n  }\n  results.push({\n    json: {\n      image_prompt: parsed.image_prompt,\n      video_prompt: parsed.video_prompt,\n      negative_prompt: parsed.negative_prompt,\n      brand_name: item.json.brand_name || '',\n      product_name: item.json.product_name || '',\n      row_number: item.json.row_number || ''\n    }\n  });\n}\n\nreturn results;"
+      },
+      "id": "code-1",
+      "name": "프롬프트 JSON 파싱",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [660, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.kie.ai/api/v1/gpt4o-image/generate",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.KIE_AI_API_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"prompt\": \"{{ $json.image_prompt }}\",\n  \"size\": \"3:2\",\n  \"nVariants\": 1,\n  \"isEnhance\": false,\n  \"enableFallback\": true\n}"
+      },
+      "id": "http-2",
+      "name": "Kie.ai 키프레임 이미지 생성",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [880, 300]
+    },
+    {
+      "parameters": {
+        "resume": "timeInterval",
+        "amount": 30,
+        "unit": "seconds"
+      },
+      "id": "wait-1",
+      "name": "이미지 생성 대기 (30초)",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [1100, 300]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://api.kie.ai/api/v1/gpt4o-image/record-info?taskId={{ $('Kie.ai 키프레임 이미지 생성').item.json.data.taskId }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.KIE_AI_API_KEY }}"
+            }
+          ]
+        }
+      },
+      "id": "http-3",
+      "name": "이미지 결과 조회 (Polling)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [1320, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "cond-1",
+              "leftValue": "={{ $json.data.successFlag }}",
+              "rightValue": 1,
+              "operator": {
+                "type": "number",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "if-1",
+      "name": "이미지 완료 체크",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [1540, 300]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const items = $input.all();\nconst results = [];\n\nfor (const item of items) {\n  const data = item.json.data || item.json;\n  const response = data.response || {};\n  const resultUrls = response.resultUrls || [];\n  const imageUrl = resultUrls[0] || response.imageUrl || '';\n  \n  const promptData = $('프롬프트 JSON 파싱').item.json;\n  \n  results.push({\n    json: {\n      image_url: imageUrl,\n      image_task_id: data.taskId || '',\n      video_prompt: promptData.video_prompt || '',\n      brand_name: promptData.brand_name || '',\n      product_name: promptData.product_name || '',\n      row_number: promptData.row_number || ''\n    }\n  });\n}\n\nreturn results;"
+      },
+      "id": "code-2",
+      "name": "이미지 URL 추출",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1760, 200]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.kie.ai/api/v1/veo/generate",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.KIE_AI_API_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"prompt\": \"{{ $json.video_prompt }}\",\n  \"imageUrls\": [\"{{ $json.image_url }}\"],\n  \"model\": \"veo3_fast\",\n  \"aspect_ratio\": \"16:9\",\n  \"generationType\": \"REFERENCE_2_VIDEO\",\n  \"enableTranslation\": false\n}"
+      },
+      "id": "http-4",
+      "name": "Kie.ai Veo3 영상 생성",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [1980, 200]
+    },
+    {
+      "parameters": {
+        "resume": "timeInterval",
+        "amount": 60,
+        "unit": "seconds"
+      },
+      "id": "wait-2",
+      "name": "영상 생성 대기 (60초)",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [2200, 200]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://api.kie.ai/api/v1/veo/record-info?taskId={{ $('Kie.ai Veo3 영상 생성').item.json.data.taskId }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.KIE_AI_API_KEY }}"
+            }
+          ]
+        }
+      },
+      "id": "http-5",
+      "name": "영상 결과 조회 (Polling)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [2420, 200]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "cond-2",
+              "leftValue": "={{ $json.data.successFlag }}",
+              "rightValue": 1,
+              "operator": {
+                "type": "number",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "if-2",
+      "name": "영상 완료 체크",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [2640, 200]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const items = $input.all();\nconst results = [];\n\nfor (const item of items) {\n  const data = item.json.data || item.json;\n  const response = data.response || {};\n  const resultUrls = response.resultUrls || [];\n  const videoUrl = resultUrls[0] || response.videoUrl || '';\n  \n  const imgData = $('이미지 URL 추출').item.json;\n  \n  results.push({\n    json: {\n      video_url: videoUrl,\n      video_task_id: data.taskId || '',\n      image_url: imgData.image_url || '',\n      brand_name: imgData.brand_name || '',\n      product_name: imgData.product_name || '',\n      row_number: imgData.row_number || '',\n      status: 'COMPLETED',\n      completed_at: new Date().toISOString()\n    }\n  });\n}\n\nreturn results;"
+      },
+      "id": "code-3",
+      "name": "최종 결과 정리",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2860, 100]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "range": "A:Z"
+      },
+      "id": "sheets-1",
+      "name": "Google Sheets 결과 기록",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [3080, 100]
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "post",
+        "text": "=:white_check_mark: *UGC 콘텐츠 생성 완료!*\n\n:briefcase: 브랜드: {{ $json.brand_name }}\n:package: 제품: {{ $json.product_name }}\n\n:frame_with_picture: 키프레임 이미지: {{ $json.image_url }}\n:movie_camera: 영상 URL: {{ $json.video_url }}\n\n:clock3: 완료 시간: {{ $json.completed_at }}"
+      },
+      "id": "slack-1",
+      "name": "Slack 완료 알림",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.4,
+      "position": [3300, 100]
+    },
+    {
+      "parameters": {
+        "resume": "timeInterval",
+        "amount": 15,
+        "unit": "seconds"
+      },
+      "id": "wait-3",
+      "name": "이미지 재시도 대기 (15초)",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [1760, 420]
+    },
+    {
+      "parameters": {
+        "resume": "timeInterval",
+        "amount": 30,
+        "unit": "seconds"
+      },
+      "id": "wait-4",
+      "name": "영상 재시도 대기 (30초)",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [2860, 320]
+    }
+  ],
+  "connections": {
+    "Google Sheets Trigger": {
+      "main": [
+        [
+          {
+            "node": "변수 세팅",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "변수 세팅": {
+      "main": [
+        [
+          {
+            "node": "AI 프롬프트 생성 (Claude)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI 프롬프트 생성 (Claude)": {
+      "main": [
+        [
+          {
+            "node": "프롬프트 JSON 파싱",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "프롬프트 JSON 파싱": {
+      "main": [
+        [
+          {
+            "node": "Kie.ai 키프레임 이미지 생성",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Kie.ai 키프레임 이미지 생성": {
+      "main": [
+        [
+          {
+            "node": "이미지 생성 대기 (30초)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "이미지 생성 대기 (30초)": {
+      "main": [
+        [
+          {
+            "node": "이미지 결과 조회 (Polling)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "이미지 결과 조회 (Polling)": {
+      "main": [
+        [
+          {
+            "node": "이미지 완료 체크",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "이미지 완료 체크": {
+      "main": [
+        [
+          {
+            "node": "이미지 URL 추출",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "이미지 재시도 대기 (15초)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "이미지 URL 추출": {
+      "main": [
+        [
+          {
+            "node": "Kie.ai Veo3 영상 생성",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Kie.ai Veo3 영상 생성": {
+      "main": [
+        [
+          {
+            "node": "영상 생성 대기 (60초)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "영상 생성 대기 (60초)": {
+      "main": [
+        [
+          {
+            "node": "영상 결과 조회 (Polling)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "영상 결과 조회 (Polling)": {
+      "main": [
+        [
+          {
+            "node": "영상 완료 체크",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "영상 완료 체크": {
+      "main": [
+        [
+          {
+            "node": "최종 결과 정리",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "영상 재시도 대기 (30초)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "최종 결과 정리": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets 결과 기록",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Sheets 결과 기록": {
+      "main": [
+        [
+          {
+            "node": "Slack 완료 알림",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "이미지 재시도 대기 (15초)": {
+      "main": [
+        [
+          {
+            "node": "이미지 결과 조회 (Polling)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "영상 재시도 대기 (30초)": {
+      "main": [
+        [
+          {
+            "node": "영상 결과 조회 (Polling)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "saveExecutionProgress": true
+  },
+  "tags": [
+    {
+      "name": "FlowPilot"
+    },
+    {
+      "name": "UGC"
+    },
+    {
+      "name": "Kie.ai"
+    }
+  ]
+}

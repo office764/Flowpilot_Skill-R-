@@ -1,0 +1,587 @@
+{
+  "name": "콘텐츠 마이닝 C.01 - Kinohi 바디미스트 AI UGC 리뷰영상 30초 v3",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "AI UGC 리뷰 영상 생성기",
+        "formDescription": "<h3>Kinohi AI UGC 리뷰 영상 생성</h3><p>제품 정보를 입력하면 AI가 자동으로 30초 UGC 리뷰 영상 에셋을 생성합니다.</p>",
+        "formFields": {
+          "values": [
+            { "fieldLabel": "브랜드명", "fieldType": "text", "requiredField": true, "placeholder": "예: Kinohi" },
+            { "fieldLabel": "제품명", "fieldType": "text", "requiredField": true, "placeholder": "예: 키노히 바디미스트 santal" },
+            { "fieldLabel": "가격", "fieldType": "text", "requiredField": true, "placeholder": "예: 30,000원" },
+            { "fieldLabel": "제품 설명", "fieldType": "textarea", "requiredField": true, "placeholder": "제품의 특징, 향 노트, 용량, 주요 성분 등" },
+            { "fieldLabel": "고객 리뷰 요약", "fieldType": "textarea", "requiredField": true, "placeholder": "실제 고객 리뷰를 요약해서 입력 (별점, 구매처, 핵심 내용)" },
+            { "fieldLabel": "핵심 셀링포인트", "fieldType": "textarea", "requiredField": false, "placeholder": "예: SP1: 모공각화증 케어 | SP2: 바디크림 대체 | SP3: 즉각 보습" },
+            { "fieldLabel": "상세페이지 URL", "fieldType": "text", "requiredField": false, "placeholder": "제품 상세페이지 URL (선택사항)" },
+            { "fieldLabel": "AI 모델 이미지 URL", "fieldType": "text", "requiredField": false, "placeholder": "기존 AI 모델 이미지가 있으면 URL 입력 (없으면 새로 생성)" },
+            { "fieldLabel": "제품 이미지", "fieldType": "file", "requiredField": false, "placeholder": "제품 실물 사진 업로드 (선택사항)", "acceptFileTypes": ".jpg,.jpeg,.png,.webp" }
+          ]
+        },
+        "responseMode": "lastNode"
+      },
+      "id": "node-form",
+      "name": "Form Trigger",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.2,
+      "position": [0, 500],
+      "webhookId": "kinohi-ugc-form"
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            { "id": "a1", "name": "brand", "value": "={{ $json['브랜드명'] }}", "type": "string" },
+            { "id": "a2", "name": "product", "value": "={{ $json['제품명'] }}", "type": "string" },
+            { "id": "a3", "name": "price", "value": "={{ $json['가격'] }}", "type": "string" },
+            { "id": "a4", "name": "product_description", "value": "={{ $json['제품 설명'] }}", "type": "string" },
+            { "id": "a5", "name": "customer_reviews", "value": "={{ $json['고객 리뷰 요약'] }}", "type": "string" },
+            { "id": "a6", "name": "selling_points", "value": "={{ $json['핵심 셀링포인트'] || '' }}", "type": "string" },
+            { "id": "a7", "name": "product_page_url", "value": "={{ $json['상세페이지 URL'] || '' }}", "type": "string" },
+            { "id": "a8", "name": "model_image_url", "value": "={{ $json['AI 모델 이미지 URL'] || '' }}", "type": "string" }
+          ]
+        }
+      },
+      "id": "node-set-data",
+      "name": "제품 데이터 정리",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [220, 500]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+          "conditions": [{ "id": "cond-url-1", "leftValue": "={{ $json.product_page_url }}", "rightValue": "", "operator": { "type": "string", "operation": "notEmpty" } }],
+          "combinator": "and"
+        }
+      },
+      "id": "node-if-url",
+      "name": "상세페이지 URL 체크",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [440, 500]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $json.product_page_url }}",
+        "authentication": "none",
+        "options": { "response": { "response": { "responseFormat": "text" } } }
+      },
+      "id": "node-fetch-page",
+      "name": "상세페이지 크롤링",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [660, 380]
+    },
+    {
+      "parameters": {
+        "jsCode": "const formData = $('제품 데이터 정리').first().json;\nconst htmlBody = $input.first().json.data || $input.first().json.body || String($input.first().json);\nlet pageText = htmlBody.replace(/<script[\\s\\S]*?<\\/script>/gi, '').replace(/<style[\\s\\S]*?<\\/style>/gi, '').replace(/<[^>]*>/g, ' ').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/\\s+/g, ' ').trim();\npageText = pageText.substring(0, 5000);\nreturn [{ json: { ...formData, page_text: pageText, has_page_data: true } }];"
+      },
+      "id": "node-merge-pagedata",
+      "name": "페이지+데이터 합치기",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [880, 380]
+    },
+    {
+      "parameters": {
+        "jsCode": "const formData = $('제품 데이터 정리').first().json;\nreturn [{ json: { ...formData, page_text: '', has_page_data: false } }];"
+      },
+      "id": "node-nourl-passthrough",
+      "name": "URL 없음 - 데이터 전달",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [660, 620]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are a senior Korean beauty/skincare product analyst with 15 years of expertise in consumer insights and product marketing.\n\nAnalyze the following product data with extreme precision:\n\nBrand: {{ $json.brand }}\nProduct: {{ $json.product }}\nPrice: {{ $json.price }}\nProduct Description: {{ $json.product_description }}\nCustomer Reviews: {{ $json.customer_reviews }}\nSelling Points: {{ $json.selling_points }}\nProduct Page Content: {{ $json.page_text || 'Not provided' }}\n\nPerform a DEEP analysis and extract:\n1. TOP 3 KEY ADVANTAGES\n2. TOP 3 PAIN POINTS this product solves\n3. UNIQUE SELLING PROPOSITION\n4. EMOTIONAL TRIGGERS\n5. SENSORY DESCRIPTION\n6. TARGET AUDIENCE\n7. BEST HOOK\n\nOutput ONLY valid JSON:\n{\"advantages\":[\"advantage1\",\"advantage2\",\"advantage3\"],\"pain_points\":[\"pain1\",\"pain2\",\"pain3\"],\"usp\":\"unique selling proposition\",\"emotional_triggers\":[\"trigger1\",\"trigger2\",\"trigger3\"],\"sensory\":\"detailed sensory description\",\"target_audience\":\"target audience description\",\"best_hook\":\"the strongest hook sentence in Korean\"}"
+      },
+      "id": "node-ai-analysis",
+      "name": "제품 분석 AI",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [1100, 500]
+    },
+    {
+      "parameters": { "modelName": "models/gemini-2.5-flash", "options": {} },
+      "id": "node-gemini-1",
+      "name": "Gemini (분석용)",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [1100, 720],
+      "credentials": {}
+    },
+    {
+      "parameters": {
+        "jsCode": "const aiOutput = $input.first().json.output || $input.first().json.text || JSON.stringify($input.first().json);\nlet parsed;\ntry {\n  const jsonMatch = aiOutput.match(/\\{[\\s\\S]*\\}/);\n  parsed = JSON.parse(jsonMatch[0]);\n} catch(e) {\n  parsed = { advantages: ['보습력 우수', '간편한 사용', '향기 만족'], pain_points: ['건조함', '바디크림 번거로움', '보습 지속력 부족'], usp: '스프레이형 즉각 보습', emotional_triggers: ['편안함', '자기관리 만족감'], sensory: '산뜻한 우디향, 끈적임 없는 흡수', target_audience: '20-30대 여성', best_hook: '와 진짜 이거 쓰고 피부가 달라졌어' };\n}\nconst formData = $('제품 데이터 정리').first().json;\nreturn [{ json: { ...formData, advantages: parsed.advantages, pain_points: parsed.pain_points, usp: parsed.usp, emotional_triggers: parsed.emotional_triggers, sensory: parsed.sensory, target_audience: parsed.target_audience, best_hook: parsed.best_hook } }];"
+      },
+      "id": "node-parse-analysis",
+      "name": "분석 결과 파싱",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1320, 500]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are a NATIVE Korean woman in her mid-20s who genuinely uses and loves beauty products. You are recording a casual UGC review video for Instagram Reels.\n\nCRITICAL: Write ONLY in natural spoken Korean. Use casual/friendly tone. Include natural 감탄사, 축약형, 어미 변형.\nABSOLUTELY ZERO AI-sounding text. Zero textbook Korean. Zero marketing language.\n\nProduct: {{ $json.product }} | Brand: {{ $json.brand }} | Price: {{ $json.price }}\nAdvantages: {{ JSON.stringify($json.advantages) }}\nPain Points: {{ JSON.stringify($json.pain_points) }}\nUSP: {{ $json.usp }} | Sensory: {{ $json.sensory }} | Best Hook: {{ $json.best_hook }}\n\nSCRIPT STRUCTURE (30초, 7줄):\nline 1: HOOK (0~3초) - 시청자를 즉시 잡는 첫 문장\nline 2: PROBLEM (3~7초) - 공감가는 고민\nline 3: DISCOVERY (8~10초) - 제품을 알게 된 계기\nline 4: DISCOVERY (10~12초) - 첫 구매 이유\nline 5: SOLUTION (13~18초) - 사용 경험 + 향/질감\nline 6: SOLUTION (18~22초) - 구체적 효과\nline 7: CTA (22~28초) - 자연스러운 추천 + 제품명\n\nOutput ONLY valid JSON:\n{\"lines\":[{\"line_number\":1,\"start_sec\":0,\"end_sec\":3.27,\"section\":\"HOOK\",\"text\":\"한국어 대사\",\"syllable_count\":18,\"direction\":\"연기 디렉션\"},{\"line_number\":2,\"start_sec\":3.77,\"end_sec\":7.57,\"section\":\"PROBLEM\",\"text\":\"한국어 대사\",\"syllable_count\":21,\"direction\":\"연기 디렉션\"},{\"line_number\":3,\"start_sec\":8.07,\"end_sec\":10.43,\"section\":\"DISCOVERY\",\"text\":\"한국어 대사\",\"syllable_count\":13,\"direction\":\"연기 디렉션\"},{\"line_number\":4,\"start_sec\":10.73,\"end_sec\":12.54,\"section\":\"DISCOVERY\",\"text\":\"한국어 대사\",\"syllable_count\":10,\"direction\":\"연기 디렉션\"},{\"line_number\":5,\"start_sec\":13.04,\"end_sec\":17.58,\"section\":\"SOLUTION\",\"text\":\"한국어 대사\",\"syllable_count\":25,\"direction\":\"연기 디렉션\"},{\"line_number\":6,\"start_sec\":17.88,\"end_sec\":22.24,\"section\":\"SOLUTION\",\"text\":\"한국어 대사\",\"syllable_count\":24,\"direction\":\"연기 디렉션\"},{\"line_number\":7,\"start_sec\":22.54,\"end_sec\":28.54,\"section\":\"CTA\",\"text\":\"한국어 대사\",\"syllable_count\":33,\"direction\":\"연기 디렉션\"}],\"full_script\":\"전체 대사를 한 문장으로\",\"total_seconds\":28.54,\"total_syllables\":144,\"tone_selfcheck\":\"자연스러움 셀프체크\"}"
+      },
+      "id": "node-ai-script",
+      "name": "나레이션 대본 작성 AI",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [1540, 500]
+    },
+    {
+      "parameters": { "modelName": "models/gemini-2.5-flash", "options": {} },
+      "id": "node-gemini-2",
+      "name": "Gemini (대본용)",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [1540, 720],
+      "credentials": {}
+    },
+    {
+      "parameters": {
+        "jsCode": "const aiOutput = $input.first().json.output || $input.first().json.text || JSON.stringify($input.first().json);\nlet parsed;\ntry {\n  const jsonMatch = aiOutput.match(/\\{[\\s\\S]*\\}/);\n  parsed = JSON.parse(jsonMatch[0]);\n} catch(e) {\n  parsed = { lines: [], full_script: aiOutput, total_seconds: 28, total_syllables: 0, tone_selfcheck: 'parse error' };\n}\nconst prevData = $('분석 결과 파싱').first().json;\nreturn [{ json: { script: parsed, brand: prevData.brand, product: prevData.product, price: prevData.price, model_image_url: prevData.model_image_url, advantages: prevData.advantages, sensory: prevData.sensory } }];"
+      },
+      "id": "node-parse-script",
+      "name": "대본 파싱",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1760, 500]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+          "conditions": [{ "id": "cond-img-1", "leftValue": "={{ $json.model_image_url }}", "rightValue": "", "operator": { "type": "string", "operation": "notEmpty" } }],
+          "combinator": "and"
+        }
+      },
+      "id": "node-if-image",
+      "name": "모델 이미지 체크",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [1980, 300]
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            { "id": "img-1", "name": "image_url", "value": "={{ $json.model_image_url }}", "type": "string" },
+            { "id": "img-2", "name": "image_source", "value": "existing", "type": "string" }
+          ]
+        }
+      },
+      "id": "node-existing-image",
+      "name": "기존 이미지 세팅",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [2200, 200]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.kie.ai/api/v1/flux/kontext/generate",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "contentType": "json",
+        "bodyParametersJson": "{\n  \"prompt\": \"Front-facing portrait photograph of a natural-looking young Korean woman aged 24 in a bright clean modern bathroom, wearing a simple white cotton t-shirt, slightly damp hair loosely tied back, minimal no-makeup makeup look, looking directly at camera with friendly approachable expression and slight natural smile, soft diffused natural daylight from window on left, clean modern bathroom background slightly out of focus, shot on Sony A7IV with Sony FE 35mm f1.4 GM at f2.0, ISO 400, color temperature 5200K, medium close-up from chest up, hyper-realistic photorealistic photograph indistinguishable from real DSLR photo, ultra-detailed skin texture with visible pores and micro skin imperfections and fine peach fuzz hair and natural skin blemishes and subtle freckles, real human skin subsurface scattering with natural blood vessel undertones, individual hair strands visible with natural flyaway hairs, eyes with detailed iris fibers and natural eye moisture reflection, natural asymmetric facial features, natural lip texture with visible lip lines, realistic depth of field with optical bokeh, natural film grain, absolutely ZERO artificial smooth airbrushed plastic skin, ZERO uncanny valley effect, ZERO CGI render look, ZERO digital art style, ZERO perfect symmetry, must pass as genuine unedited photograph\",\n  \"model\": \"flux-kontext-pro\",\n  \"aspect_ratio\": \"9:16\",\n  \"safety_tolerance\": 2\n}"
+      },
+      "id": "node-gen-image",
+      "name": "AI 모델 이미지 생성 (Flux Kontext)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [2200, 420],
+      "credentials": {}
+    },
+    {
+      "parameters": { "resume": "timeInterval", "amount": 40, "unit": "seconds" },
+      "id": "node-wait-image",
+      "name": "이미지 생성 대기 40초",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [2420, 420]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://api.kie.ai/api/v1/flux/kontext/record-info?taskId={{ $('AI 모델 이미지 생성 (Flux Kontext)').item.json.data.taskId }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth"
+      },
+      "id": "node-poll-image",
+      "name": "이미지 결과 조회",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [2640, 420],
+      "credentials": {}
+    },
+    {
+      "parameters": {
+        "jsCode": "const result = $input.first().json;\nlet imageUrl = '';\ntry {\n  if (result.data && result.data.resultJson) {\n    const resultData = typeof result.data.resultJson === 'string' ? JSON.parse(result.data.resultJson) : result.data.resultJson;\n    imageUrl = resultData.images?.[0]?.url || resultData.url || resultData.output?.[0] || resultData.result?.[0]?.url || '';\n  } else if (result.data && result.data.info && result.data.info.resultUrls) {\n    imageUrl = result.data.info.resultUrls[0];\n  }\n} catch(e) {\n  imageUrl = 'ERROR: ' + e.message;\n}\nreturn [{ json: { image_url: imageUrl, image_source: 'generated', raw_response: JSON.stringify(result) } }];"
+      },
+      "id": "node-extract-imageurl",
+      "name": "이미지 URL 추출",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2860, 420]
+    },
+    {
+      "parameters": {
+        "jsCode": "// 대본의 7줄을 5개 세그먼트로 분할 (각 세그먼트 ≤15초)\nconst scriptData = $input.first().json;\nconst lines = scriptData.script.lines;\n\nconst segments = [\n  { segment_id: 1, section: 'HOOK', text: lines.slice(0, 1).map(l => l.text).join(' '), est_seconds: lines[0] ? (lines[0].end_sec - lines[0].start_sec) : 3 },\n  { segment_id: 2, section: 'PROBLEM', text: lines.slice(1, 2).map(l => l.text).join(' '), est_seconds: lines[1] ? (lines[1].end_sec - lines[1].start_sec) : 4 },\n  { segment_id: 3, section: 'DISCOVERY', text: lines.slice(2, 4).map(l => l.text).join(' '), est_seconds: lines[3] ? (lines[3].end_sec - lines[2].start_sec) : 5 },\n  { segment_id: 4, section: 'SOLUTION', text: lines.slice(4, 6).map(l => l.text).join(' '), est_seconds: lines[5] ? (lines[5].end_sec - lines[4].start_sec) : 9 },\n  { segment_id: 5, section: 'CTA', text: lines.slice(6, 7).map(l => l.text).join(' '), est_seconds: lines[6] ? (lines[6].end_sec - lines[6].start_sec) : 6 }\n].filter(s => s.text.length > 0);\n\nreturn segments.map(seg => ({\n  json: {\n    ...seg,\n    brand: scriptData.brand,\n    product: scriptData.product,\n    model_image_url: scriptData.model_image_url\n  }\n}));"
+      },
+      "id": "node-segment-split",
+      "name": "스크립트 세그먼트 분할",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1980, 700]
+    },
+    {
+      "parameters": { "batchSize": 1 },
+      "id": "node-tts-loop",
+      "name": "TTS 세그먼트 순차 루프",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [2200, 700]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.typecast.ai/v1/text-to-speech",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"text\": \"{{ $json.text }}\",\n  \"model\": \"ssfm-v30\",\n  \"voice_id\": \"tc_646f0dac2465b38f37787f64\",\n  \"language\": \"kor\",\n  \"prompt\": {\n    \"emotion_type\": \"smart\",\n    \"previous_text\": \"\",\n    \"next_text\": \"\"\n  },\n  \"output\": {\n    \"audio_format\": \"mp3\",\n    \"audio_tempo\": 1.15,\n    \"volume\": 75\n  }\n}",
+        "options": { "response": { "response": { "responseFormat": "file" } } }
+      },
+      "id": "node-tts-segment",
+      "name": "세그먼트별 TTS 생성 (Typecast)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [2420, 700],
+      "credentials": {}
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://tmpfiles.org/api/v1/upload",
+        "authentication": "none",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [{ "parameterType": "formBinaryData", "name": "file", "inputDataFieldName": "data" }]
+        }
+      },
+      "id": "node-upload-segment",
+      "name": "세그먼트 오디오 업로드 (tmpfiles)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [2640, 700]
+    },
+    {
+      "parameters": {
+        "jsCode": "const result = $input.first().json;\nconst segData = $('TTS 세그먼트 순차 루프').first().json;\nlet audioUrl = '';\ntry {\n  const tmpUrl = result.data?.url || result.url || '';\n  audioUrl = tmpUrl.replace('tmpfiles.org/', 'tmpfiles.org/dl/');\n} catch(e) {\n  audioUrl = 'ERROR: ' + e.message;\n}\nreturn [{ json: { audio_url: audioUrl, segment_id: segData.segment_id, section: segData.section, text: segData.text } }];"
+      },
+      "id": "node-extract-seg-audiourl",
+      "name": "세그먼트 오디오 URL 추출",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2860, 700]
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineAll"
+      },
+      "id": "node-merge-media",
+      "name": "이미지+세그먼트 합치기",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [3300, 500]
+    },
+    {
+      "parameters": {
+        "jsCode": "// 이미지 URL(1개) + 세그먼트 오디오 URL(5개)을 결합\n// Merge 노드에서 combineAll로 들어오면 모든 조합이 생기므로\n// 이미지 URL을 추출하고 세그먼트별로 정리\nconst items = $input.all();\nconst imageUrl = items[0]?.json?.image_url || '';\n\n// 세그먼트별 오디오 URL 수집 (중복 제거)\nconst seen = new Set();\nconst segments = [];\nfor (const item of items) {\n  const segId = item.json.segment_id;\n  if (segId && !seen.has(segId)) {\n    seen.add(segId);\n    segments.push({\n      segment_id: segId,\n      section: item.json.section,\n      audio_url: item.json.audio_url,\n      image_url: imageUrl\n    });\n  }\n}\n\n// segment_id 순으로 정렬\nsegments.sort((a, b) => a.segment_id - b.segment_id);\n\nreturn segments.map(seg => ({ json: seg }));"
+      },
+      "id": "node-prepare-talking",
+      "name": "토킹 클립 데이터 정리",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [3520, 500]
+    },
+    {
+      "parameters": { "batchSize": 1 },
+      "id": "node-talking-loop",
+      "name": "토킹 클립 순차 생성 루프",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [3740, 500]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.kie.ai/api/v1/jobs/createTask",
+        "authentication": "none",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "Bearer 78e0997fd3c8399fc94ebfc323fd9994" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"infinitalk/from-audio\",\n  \"input\": {\n    \"image_url\": \"{{ $json.image_url }}\",\n    \"audio_url\": \"{{ $json.audio_url }}\",\n    \"prompt\": \"A natural-looking young Korean woman aged 24 casually talking in her bathroom, wearing a white cotton t-shirt, slightly damp hair loosely tied back, soft natural daylight, realistic subtle facial micro-expressions and natural lip sync, natural eye blinks and head micro-movements\",\n    \"resolution\": \"720p\"\n  }\n}",
+        "options": {}
+      },
+      "id": "node-talking",
+      "name": "토킹 아바타 생성 (InfiniteTalk)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [3960, 300]
+    },
+    {
+      "parameters": { "resume": "timeInterval", "amount": 120, "unit": "seconds" },
+      "id": "node-wait-talking",
+      "name": "토킹 영상 대기 120초",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [4180, 300]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://api.kie.ai/api/v1/jobs/recordInfo?taskId={{ $json.data.taskId }}",
+        "authentication": "none",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "Bearer 78e0997fd3c8399fc94ebfc323fd9994" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "node-poll-talking",
+      "name": "토킹 영상 결과 조회",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [4400, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const prevData = $('대본 파싱').first().json;\nconst talkingResults = $input.all();\n\nconst clips = talkingResults.map((item, i) => {\n  let videoUrl = '';\n  try {\n    const rd = item.json.data || item.json;\n    if (rd.response && rd.response.resultUris) {\n      videoUrl = rd.response.resultUris[0];\n    } else if (rd.resultJson) {\n      const parsed = typeof rd.resultJson === 'string' ? JSON.parse(rd.resultJson) : rd.resultJson;\n      videoUrl = parsed.video?.url || parsed.url || parsed.output?.[0] || '';\n    }\n  } catch(e) {\n    videoUrl = 'parse_error: ' + e.message;\n  }\n  return { segment: i + 1, video_url: videoUrl };\n});\n\nconst brolls = [\n  { id: 'broll_1', name: '제품 클로즈업', prompt: 'Vertical 9:16 cinematic close-up shot of a Kinohi body mist santal frosted glass bottle being held gently in a young Korean womans hand, fingers naturally wrapped around bottle, minimalist KINOHI branding visible on label, soft warm bathroom lighting from left, bottle has subtle sage green to cream gradient, clean white bathroom counter background blurred with natural bokeh, shot on Sony A7RV with Sony FE 90mm f2.8 Macro at f3.5, ISO 200, 4800K color temperature, hyper-realistic footage indistinguishable from real cinema camera capture, ultra-detailed material textures with visible surface micro-texture and natural light interaction, realistic glass refraction and reflection, natural motion blur consistent with real camera shutter speed, absolutely ZERO AI-generated look, ZERO CGI render look, must pass as genuine footage from professional cinema camera' },\n  { id: 'broll_2', name: '팔에 미스트 뿌리기', prompt: 'Vertical 9:16 close-up of young Korean woman spraying body mist onto bare forearm in bright modern bathroom, fine mist particles catching soft window light creating beautiful spray effect, skin slightly damp from shower with water droplets visible, delicate mist cloud around arm, white bathrobe sleeve rolled up, camera slightly above looking down at arm, shot on Canon EOS R5 with RF 50mm f1.2L at f2.0, ISO 400, 5000K, hyper-realistic footage indistinguishable from real cinema camera capture, ultra-detailed skin with visible pores and natural skin texture movement during motion, absolutely ZERO artificial smooth plastic skin, ZERO uncanny valley, ZERO AI-generated look, must pass as genuine footage' },\n  { id: 'broll_3', name: '피부 흡수 클로즈업', prompt: 'Vertical 9:16 extreme close-up macro of Korean woman forearm skin after applying body mist, natural healthy dewy glow with micro water droplets being absorbed into skin, incredibly detailed fine skin texture and natural pores, moisture creates subtle sheen that settles into skin showing absorption, soft warm diffused lighting from right, shot on Canon EOS R5 with RF 100mm f2.8L Macro IS USM at f4.0, ISO 320, 5000K, hyper-realistic footage indistinguishable from real cinema camera, absolutely ZERO smooth plastic skin, ZERO AI look, must pass as genuine footage from professional camera' },\n  { id: 'broll_4', name: '손목 향 맡기', prompt: 'Vertical 9:16 medium close-up of young Korean woman spraying body mist on inner wrist then gently bringing wrist close to nose with eyes slightly closed and subtle pleased natural smile, soft natural daylight in clean modern bedroom, casual comfortable white t-shirt, genuine enjoyment expression on face, shot on Sony A7IV with Sony FE 35mm f1.4 GM at f2.0, ISO 400, 5200K, hyper-realistic footage indistinguishable from real cinema camera capture, ultra-detailed skin with visible pores and micro expressions, absolutely ZERO artificial smooth plastic skin, ZERO uncanny valley, ZERO robotic stiff movement, must pass as genuine footage' },\n  { id: 'broll_5', name: '엔딩 제품샷', prompt: 'Vertical 9:16 elegant product shot of Kinohi body mist santal bottle standing upright on light natural wood surface, soft golden morning sunlight streaming from right creating warm highlights on frosted glass bottle, dried cardamom pods and small sandalwood chips artfully placed beside bottle, sage green and cream color palette, clean bright background with soft natural shadows, KINOHI santal text clearly readable on label, shot on Hasselblad X2D 100C with XCD 90mm f2.5 at f4.0, ISO 100, 5000K, hyper-realistic product photography indistinguishable from real studio photograph, absolutely ZERO CGI render look, ZERO 3D modeling aesthetic, must pass as genuine product photo from commercial studio shoot' }\n];\n\nreturn brolls.map(b => ({ json: { ...b, talking_clips: clips, brand: prevData.brand, product: prevData.product, full_script: prevData.script.full_script || '' } }));"
+      },
+      "id": "node-broll-prompts",
+      "name": "B-Roll 프롬프트 5개 생성",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [3740, 700]
+    },
+    {
+      "parameters": { "batchSize": 1 },
+      "id": "node-broll-loop",
+      "name": "B-Roll 순차 생성 루프",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [3960, 700]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.kie.ai/api/v1/veo/generate",
+        "authentication": "none",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "Bearer 78e0997fd3c8399fc94ebfc323fd9994" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"prompt\": \"{{ $json.prompt }}\",\n  \"model\": \"veo3_fast\",\n  \"generationType\": \"TEXT_2_VIDEO\",\n  \"aspect_ratio\": \"9:16\",\n  \"enableTranslation\": false\n}",
+        "options": {}
+      },
+      "id": "node-gen-broll",
+      "name": "B-Roll 영상 생성 (Veo 3.1)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [4180, 900]
+    },
+    {
+      "parameters": { "resume": "timeInterval", "amount": 120, "unit": "seconds" },
+      "id": "node-wait-broll",
+      "name": "B-Roll 대기 120초",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [4400, 900]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://api.kie.ai/api/v1/veo/record-info?taskId={{ $json.data.taskId }}",
+        "authentication": "none",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "Bearer 78e0997fd3c8399fc94ebfc323fd9994" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "node-poll-broll",
+      "name": "B-Roll 결과 조회",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [4620, 900]
+    },
+    {
+      "parameters": {
+        "jsCode": "const brollPollItems = $input.all();\nconst scriptData = $('대본 파싱').first().json;\n\n// talking_clips는 B-Roll 프롬프트 노드에서 가져옴 (B-Roll 폴링 결과에는 없음)\nconst brollPromptItems = $('B-Roll 프롬프트 5개 생성').all();\nconst talkingClips = brollPromptItems[0]?.json?.talking_clips || [];\n\nconst brollResults = brollPollItems.map((item, i) => {\n  let videoUrl = '';\n  try {\n    const rd = item.json.data || item.json;\n    if (rd.response && rd.response.resultUris) {\n      videoUrl = rd.response.resultUris[0];\n    } else if (rd.resultJson) {\n      const parsed = typeof rd.resultJson === 'string' ? JSON.parse(rd.resultJson) : rd.resultJson;\n      videoUrl = parsed.video?.url || parsed.url || parsed.output?.[0] || '';\n    }\n  } catch(e) {\n    videoUrl = 'parse_error';\n  }\n  return { scene: i + 1, name: brollPromptItems[i]?.json?.name || ('B-Roll ' + (i+1)), video_url: videoUrl };\n});\n\nreturn [{ json: {\n  brand: scriptData.brand,\n  product: scriptData.product,\n  full_script: scriptData.script?.full_script || '',\n  talking_clips: talkingClips,\n  broll_clips: brollResults,\n  total_talking: talkingClips.length,\n  total_broll: brollResults.length,\n  created_at: new Date().toISOString(),\n  status: 'all_assets_generated',\n  next_step: 'CapCut 또는 Premiere Pro에서 토킹영상 5개 + B-Roll 5개를 조합하여 30초 릴스 편집'\n} }];"
+      },
+      "id": "node-aggregate",
+      "name": "최종 결과 집계",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [3960, 1100]
+    }
+  ],
+  "connections": {
+    "Form Trigger": {
+      "main": [[{ "node": "제품 데이터 정리", "type": "main", "index": 0 }]]
+    },
+    "제품 데이터 정리": {
+      "main": [[{ "node": "상세페이지 URL 체크", "type": "main", "index": 0 }]]
+    },
+    "상세페이지 URL 체크": {
+      "main": [
+        [{ "node": "상세페이지 크롤링", "type": "main", "index": 0 }],
+        [{ "node": "URL 없음 - 데이터 전달", "type": "main", "index": 0 }]
+      ]
+    },
+    "상세페이지 크롤링": {
+      "main": [[{ "node": "페이지+데이터 합치기", "type": "main", "index": 0 }]]
+    },
+    "페이지+데이터 합치기": {
+      "main": [[{ "node": "제품 분석 AI", "type": "main", "index": 0 }]]
+    },
+    "URL 없음 - 데이터 전달": {
+      "main": [[{ "node": "제품 분석 AI", "type": "main", "index": 0 }]]
+    },
+    "Gemini (분석용)": {
+      "ai_languageModel": [[{ "node": "제품 분석 AI", "type": "ai_languageModel", "index": 0 }]]
+    },
+    "제품 분석 AI": {
+      "main": [[{ "node": "분석 결과 파싱", "type": "main", "index": 0 }]]
+    },
+    "분석 결과 파싱": {
+      "main": [[{ "node": "나레이션 대본 작성 AI", "type": "main", "index": 0 }]]
+    },
+    "Gemini (대본용)": {
+      "ai_languageModel": [[{ "node": "나레이션 대본 작성 AI", "type": "ai_languageModel", "index": 0 }]]
+    },
+    "나레이션 대본 작성 AI": {
+      "main": [[{ "node": "대본 파싱", "type": "main", "index": 0 }]]
+    },
+    "대본 파싱": {
+      "main": [[
+        { "node": "모델 이미지 체크", "type": "main", "index": 0 },
+        { "node": "스크립트 세그먼트 분할", "type": "main", "index": 0 }
+      ]]
+    },
+    "모델 이미지 체크": {
+      "main": [
+        [{ "node": "기존 이미지 세팅", "type": "main", "index": 0 }],
+        [{ "node": "AI 모델 이미지 생성 (Flux Kontext)", "type": "main", "index": 0 }]
+      ]
+    },
+    "기존 이미지 세팅": {
+      "main": [[{ "node": "이미지+세그먼트 합치기", "type": "main", "index": 0 }]]
+    },
+    "AI 모델 이미지 생성 (Flux Kontext)": {
+      "main": [[{ "node": "이미지 생성 대기 40초", "type": "main", "index": 0 }]]
+    },
+    "이미지 생성 대기 40초": {
+      "main": [[{ "node": "이미지 결과 조회", "type": "main", "index": 0 }]]
+    },
+    "이미지 결과 조회": {
+      "main": [[{ "node": "이미지 URL 추출", "type": "main", "index": 0 }]]
+    },
+    "이미지 URL 추출": {
+      "main": [[{ "node": "이미지+세그먼트 합치기", "type": "main", "index": 0 }]]
+    },
+    "스크립트 세그먼트 분할": {
+      "main": [[{ "node": "TTS 세그먼트 순차 루프", "type": "main", "index": 0 }]]
+    },
+    "TTS 세그먼트 순차 루프": {
+      "main": [
+        [{ "node": "세그먼트별 TTS 생성 (Typecast)", "type": "main", "index": 0 }],
+        [{ "node": "이미지+세그먼트 합치기", "type": "main", "index": 1 }]
+      ]
+    },
+    "세그먼트별 TTS 생성 (Typecast)": {
+      "main": [[{ "node": "세그먼트 오디오 업로드 (tmpfiles)", "type": "main", "index": 0 }]]
+    },
+    "세그먼트 오디오 업로드 (tmpfiles)": {
+      "main": [[{ "node": "세그먼트 오디오 URL 추출", "type": "main", "index": 0 }]]
+    },
+    "세그먼트 오디오 URL 추출": {
+      "main": [[{ "node": "TTS 세그먼트 순차 루프", "type": "main", "index": 0 }]]
+    },
+    "이미지+세그먼트 합치기": {
+      "main": [[{ "node": "토킹 클립 데이터 정리", "type": "main", "index": 0 }]]
+    },
+    "토킹 클립 데이터 정리": {
+      "main": [[{ "node": "토킹 클립 순차 생성 루프", "type": "main", "index": 0 }]]
+    },
+    "토킹 클립 순차 생성 루프": {
+      "main": [
+        [{ "node": "토킹 아바타 생성 (InfiniteTalk)", "type": "main", "index": 0 }],
+        [{ "node": "B-Roll 프롬프트 5개 생성", "type": "main", "index": 0 }]
+      ]
+    },
+    "토킹 아바타 생성 (InfiniteTalk)": {
+      "main": [[{ "node": "토킹 영상 대기 120초", "type": "main", "index": 0 }]]
+    },
+    "토킹 영상 대기 120초": {
+      "main": [[{ "node": "토킹 영상 결과 조회", "type": "main", "index": 0 }]]
+    },
+    "토킹 영상 결과 조회": {
+      "main": [[{ "node": "토킹 클립 순차 생성 루프", "type": "main", "index": 0 }]]
+    },
+    "B-Roll 프롬프트 5개 생성": {
+      "main": [[{ "node": "B-Roll 순차 생성 루프", "type": "main", "index": 0 }]]
+    },
+    "B-Roll 순차 생성 루프": {
+      "main": [
+        [{ "node": "B-Roll 영상 생성 (Veo 3.1)", "type": "main", "index": 0 }],
+        [{ "node": "최종 결과 집계", "type": "main", "index": 0 }]
+      ]
+    },
+    "B-Roll 영상 생성 (Veo 3.1)": {
+      "main": [[{ "node": "B-Roll 대기 120초", "type": "main", "index": 0 }]]
+    },
+    "B-Roll 대기 120초": {
+      "main": [[{ "node": "B-Roll 결과 조회", "type": "main", "index": 0 }]]
+    },
+    "B-Roll 결과 조회": {
+      "main": [[{ "node": "B-Roll 순차 생성 루프", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": { "executionOrder": "v1" },
+  "pinData": {},
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 1,
+  "active": false
+}

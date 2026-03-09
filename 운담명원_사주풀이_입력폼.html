@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>운담명원 - 사주풀이 상담 신청</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@300;400;500;600;700;900&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  body {
+    font-family: 'Noto Sans KR', sans-serif;
+    background-color: #f5f0e8;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 20px;
+  }
+
+  .form-container {
+    width: 100%;
+    max-width: 520px;
+    background: #ffffff;
+    border-radius: 0;
+    overflow: hidden;
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.12);
+  }
+
+  /* ===== HEADER ===== */
+  .form-header {
+    background: #4a5a3c;
+    padding: 48px 32px 44px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .form-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(ellipse at center, rgba(255,255,255,0.04) 0%, transparent 70%);
+  }
+
+  .brand-title {
+    font-family: 'Noto Serif KR', serif;
+    font-size: 42px;
+    font-weight: 900;
+    color: #ffffff;
+    letter-spacing: 12px;
+    margin-bottom: 8px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .brand-subtitle {
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 11px;
+    font-weight: 400;
+    color: rgba(255, 255, 255, 0.55);
+    letter-spacing: 6px;
+    text-transform: uppercase;
+    position: relative;
+    z-index: 1;
+  }
+
+  .seal-stamp {
+    position: absolute;
+    top: 18px;
+    right: 22px;
+    width: 52px;
+    height: 52px;
+    border: 2.5px solid #c4392d;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transform: rotate(-15deg);
+    z-index: 1;
+  }
+
+  .seal-stamp span {
+    font-family: 'Noto Serif KR', serif;
+    font-size: 16px;
+    font-weight: 700;
+    color: #c4392d;
+    letter-spacing: 1px;
+  }
+
+  /* ===== SECTION BANNER ===== */
+  .section-banner {
+    background: #e8e2d4;
+    padding: 20px 32px;
+    text-align: center;
+    border-bottom: 1px solid #d9d1c0;
+  }
+
+  .section-banner h2 {
+    font-family: 'Noto Serif KR', serif;
+    font-size: 18px;
+    font-weight: 600;
+    color: #4a5a3c;
+    letter-spacing: 3px;
+  }
+
+  .section-banner p {
+    font-size: 12px;
+    color: #8a7e6b;
+    margin-top: 6px;
+    letter-spacing: 0.5px;
+  }
+
+  /* ===== FORM BODY ===== */
+  .form-body {
+    padding: 32px;
+    background: #faf8f4;
+  }
+
+  .form-section-title {
+    font-family: 'Noto Serif KR', serif;
+    font-size: 15px;
+    font-weight: 600;
+    color: #4a5a3c;
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+    border-bottom: 1.5px solid #4a5a3c;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .form-section-title .dot {
+    width: 6px;
+    height: 6px;
+    background: #c4392d;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .form-group {
+    margin-bottom: 20px;
+  }
+
+  .form-group label {
+    display: block;
+    font-size: 13px;
+    font-weight: 500;
+    color: #3d3d3d;
+    margin-bottom: 6px;
+    letter-spacing: 0.3px;
+  }
+
+  .form-group label .required {
+    color: #c4392d;
+    margin-left: 2px;
+  }
+
+  .form-group input[type="text"],
+  .form-group input[type="number"],
+  .form-group select,
+  .form-group textarea {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1px solid #d4cfc4;
+    border-radius: 4px;
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 14px;
+    color: #2d2d2d;
+    background: #ffffff;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    outline: none;
+  }
+
+  .form-group input:focus,
+  .form-group select:focus,
+  .form-group textarea:focus {
+    border-color: #4a5a3c;
+    box-shadow: 0 0 0 3px rgba(74, 90, 60, 0.1);
+  }
+
+  .form-group textarea {
+    min-height: 90px;
+    resize: vertical;
+    line-height: 1.6;
+  }
+
+  .form-group select {
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%234a5a3c' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 16px;
+    padding-right: 36px;
+  }
+
+  /* ===== RADIO GROUP ===== */
+  .radio-group {
+    display: flex;
+    gap: 12px;
+  }
+
+  .radio-option {
+    flex: 1;
+    position: relative;
+  }
+
+  .radio-option input[type="radio"] {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+
+  .radio-option label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 11px 0;
+    border: 1px solid #d4cfc4;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: 400;
+    color: #5a5a5a;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: #ffffff;
+    margin-bottom: 0;
+  }
+
+  .radio-option input[type="radio"]:checked + label {
+    background: #4a5a3c;
+    color: #ffffff;
+    border-color: #4a5a3c;
+    font-weight: 500;
+  }
+
+  /* ===== DATE ROW ===== */
+  .date-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 10px;
+  }
+
+  .time-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .form-group .unit-label {
+    font-size: 12px;
+    color: #8a8a8a;
+    margin-top: 4px;
+    text-align: center;
+  }
+
+  /* ===== TOGGLE ===== */
+  .toggle-section {
+    margin-top: 32px;
+    padding-top: 24px;
+    border-top: 1px dashed #d4cfc4;
+  }
+
+  .toggle-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    padding: 12px 16px;
+    background: #eee9dc;
+    border-radius: 4px;
+    margin-bottom: 0;
+    transition: background 0.2s;
+  }
+
+  .toggle-header:hover {
+    background: #e6e0d0;
+  }
+
+  .toggle-header span {
+    font-family: 'Noto Serif KR', serif;
+    font-size: 14px;
+    font-weight: 600;
+    color: #4a5a3c;
+    letter-spacing: 1px;
+  }
+
+  .toggle-arrow {
+    font-size: 18px;
+    color: #4a5a3c;
+    transition: transform 0.3s;
+  }
+
+  .toggle-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s ease;
+  }
+
+  .toggle-content.open {
+    max-height: 800px;
+  }
+
+  .toggle-content .inner-padding {
+    padding: 24px 0 0;
+  }
+
+  /* ===== DIVIDER ===== */
+  .form-divider {
+    height: 1px;
+    background: linear-gradient(to right, transparent, #c4b99a, transparent);
+    margin: 28px 0;
+  }
+
+  /* ===== SUBMIT ===== */
+  .submit-section {
+    padding: 0 32px 36px;
+    background: #faf8f4;
+  }
+
+  .submit-btn {
+    width: 100%;
+    padding: 16px;
+    background: #4a5a3c;
+    color: #ffffff;
+    border: none;
+    border-radius: 4px;
+    font-family: 'Noto Serif KR', serif;
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: 4px;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .submit-btn:hover {
+    background: #3d4d31;
+  }
+
+  .submit-btn:active {
+    transform: scale(0.99);
+  }
+
+  .submit-note {
+    text-align: center;
+    margin-top: 14px;
+    font-size: 11px;
+    color: #a09888;
+    line-height: 1.6;
+  }
+
+  /* ===== FOOTER ===== */
+  .form-footer {
+    background: #4a5a3c;
+    padding: 20px 32px;
+    text-align: center;
+  }
+
+  .form-footer p {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.45);
+    letter-spacing: 1px;
+  }
+
+  /* ===== PLACEHOLDER ===== */
+  ::placeholder {
+    color: #b8b2a4;
+    font-size: 13px;
+  }
+
+  /* ===== RESPONSIVE ===== */
+  @media (max-width: 560px) {
+    body {
+      padding: 0;
+    }
+    .form-container {
+      border-radius: 0;
+    }
+    .form-header {
+      padding: 36px 24px 32px;
+    }
+    .brand-title {
+      font-size: 32px;
+      letter-spacing: 8px;
+    }
+    .form-body, .submit-section {
+      padding-left: 20px;
+      padding-right: 20px;
+    }
+    .seal-stamp {
+      width: 42px;
+      height: 42px;
+      top: 14px;
+      right: 14px;
+    }
+    .seal-stamp span {
+      font-size: 13px;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div class="form-container">
+
+  <!-- HEADER -->
+  <div class="form-header">
+    <div class="seal-stamp"><span>印</span></div>
+    <div class="brand-title">운담명원</div>
+    <div class="brand-subtitle">KOREAN SHAMEN</div>
+  </div>
+
+  <!-- SECTION BANNER -->
+  <div class="section-banner">
+    <h2>사주풀이 상담 신청서</h2>
+    <p>정확한 생년월일시를 입력해 주시면 명리학 기반의 사주 분석을 제공해 드립니다</p>
+  </div>
+
+  <form id="sajuForm">
+
+    <!-- FORM BODY -->
+    <div class="form-body">
+
+      <!-- 1인 정보 -->
+      <div class="form-section-title">
+        <span class="dot"></span>
+        본인 정보
+      </div>
+
+      <div class="form-group">
+        <label>이름 <span class="required">*</span></label>
+        <input type="text" name="이름" placeholder="성명을 입력해 주세요" required>
+      </div>
+
+      <div class="form-group">
+        <label>성별 <span class="required">*</span></label>
+        <div class="radio-group">
+          <div class="radio-option">
+            <input type="radio" name="성별" id="male" value="남성" required>
+            <label for="male">남성</label>
+          </div>
+          <div class="radio-option">
+            <input type="radio" name="성별" id="female" value="여성">
+            <label for="female">여성</label>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>달력 <span class="required">*</span></label>
+        <div class="radio-group">
+          <div class="radio-option">
+            <input type="radio" name="달력" id="solar" value="양력" required>
+            <label for="solar">양력</label>
+          </div>
+          <div class="radio-option">
+            <input type="radio" name="달력" id="lunar" value="음력">
+            <label for="lunar">음력</label>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>생년월일 <span class="required">*</span></label>
+        <div class="date-row">
+          <div>
+            <input type="number" name="년" placeholder="1990" min="1920" max="2026" required>
+            <div class="unit-label">년</div>
+          </div>
+          <div>
+            <select name="월" required>
+              <option value="" disabled selected>월</option>
+              <option value="1">1월</option>
+              <option value="2">2월</option>
+              <option value="3">3월</option>
+              <option value="4">4월</option>
+              <option value="5">5월</option>
+              <option value="6">6월</option>
+              <option value="7">7월</option>
+              <option value="8">8월</option>
+              <option value="9">9월</option>
+              <option value="10">10월</option>
+              <option value="11">11월</option>
+              <option value="12">12월</option>
+            </select>
+            <div class="unit-label">월</div>
+          </div>
+          <div>
+            <select name="일" required>
+              <option value="" disabled selected>일</option>
+              <option value="1">1일</option>
+              <option value="2">2일</option>
+              <option value="3">3일</option>
+              <option value="4">4일</option>
+              <option value="5">5일</option>
+              <option value="6">6일</option>
+              <option value="7">7일</option>
+              <option value="8">8일</option>
+              <option value="9">9일</option>
+              <option value="10">10일</option>
+              <option value="11">11일</option>
+              <option value="12">12일</option>
+              <option value="13">13일</option>
+              <option value="14">14일</option>
+              <option value="15">15일</option>
+              <option value="16">16일</option>
+              <option value="17">17일</option>
+              <option value="18">18일</option>
+              <option value="19">19일</option>
+              <option value="20">20일</option>
+              <option value="21">21일</option>
+              <option value="22">22일</option>
+              <option value="23">23일</option>
+              <option value="24">24일</option>
+              <option value="25">25일</option>
+              <option value="26">26일</option>
+              <option value="27">27일</option>
+              <option value="28">28일</option>
+              <option value="29">29일</option>
+              <option value="30">30일</option>
+              <option value="31">31일</option>
+            </select>
+            <div class="unit-label">일</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>태어난 시간</label>
+        <div class="time-row">
+          <div>
+            <select name="시">
+              <option value="" disabled selected>시</option>
+              <option value="0">0시 (자시)</option>
+              <option value="1">1시</option>
+              <option value="2">2시</option>
+              <option value="3">3시 (인시)</option>
+              <option value="4">4시</option>
+              <option value="5">5시 (묘시)</option>
+              <option value="6">6시</option>
+              <option value="7">7시 (진시)</option>
+              <option value="8">8시</option>
+              <option value="9">9시 (사시)</option>
+              <option value="10">10시</option>
+              <option value="11">11시 (오시)</option>
+              <option value="12">12시</option>
+              <option value="13">13시 (미시)</option>
+              <option value="14">14시</option>
+              <option value="15">15시 (신시)</option>
+              <option value="16">16시</option>
+              <option value="17">17시 (유시)</option>
+              <option value="18">18시</option>
+              <option value="19">19시 (술시)</option>
+              <option value="20">20시</option>
+              <option value="21">21시 (해시)</option>
+              <option value="22">22시</option>
+              <option value="23">23시</option>
+            </select>
+            <div class="unit-label">시</div>
+          </div>
+          <div>
+            <select name="분">
+              <option value="" disabled selected>분</option>
+              <option value="0">0분</option>
+              <option value="5">5분</option>
+              <option value="10">10분</option>
+              <option value="15">15분</option>
+              <option value="20">20분</option>
+              <option value="25">25분</option>
+              <option value="30">30분</option>
+              <option value="35">35분</option>
+              <option value="40">40분</option>
+              <option value="45">45분</option>
+              <option value="50">50분</option>
+              <option value="55">55분</option>
+            </select>
+            <div class="unit-label">분</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>궁금하신 점 / 추가 질문</label>
+        <textarea name="추가질문" placeholder="운세, 진로, 건강, 재물 등 특별히 궁금하신 부분이 있으시면 자유롭게 적어주세요."></textarea>
+      </div>
+
+      <!-- 궁합 토글 -->
+      <div class="toggle-section">
+        <div class="toggle-header" onclick="toggleGunghap()">
+          <span>궁합 상대방 정보 입력</span>
+          <span class="toggle-arrow" id="toggleArrow">&#9662;</span>
+        </div>
+        <div class="toggle-content" id="gunghapSection">
+          <div class="inner-padding">
+
+            <div class="form-section-title">
+              <span class="dot"></span>
+              상대방 정보
+            </div>
+
+            <div class="form-group">
+              <label>이름</label>
+              <input type="text" name="2.이름" placeholder="상대방 성명">
+            </div>
+
+            <div class="form-group">
+              <label>성별</label>
+              <div class="radio-group">
+                <div class="radio-option">
+                  <input type="radio" name="2.성별" id="male2" value="남성">
+                  <label for="male2">남성</label>
+                </div>
+                <div class="radio-option">
+                  <input type="radio" name="2.성별" id="female2" value="여성">
+                  <label for="female2">여성</label>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>달력</label>
+              <div class="radio-group">
+                <div class="radio-option">
+                  <input type="radio" name="2.달력" id="solar2" value="양력">
+                  <label for="solar2">양력</label>
+                </div>
+                <div class="radio-option">
+                  <input type="radio" name="2.달력" id="lunar2" value="음력">
+                  <label for="lunar2">음력</label>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>생년월일</label>
+              <div class="date-row">
+                <div>
+                  <input type="number" name="2.년" placeholder="1990" min="1920" max="2026">
+                  <div class="unit-label">년</div>
+                </div>
+                <div>
+                  <select name="2.월">
+                    <option value="" disabled selected>월</option>
+                    <option value="1">1월</option>
+                    <option value="2">2월</option>
+                    <option value="3">3월</option>
+                    <option value="4">4월</option>
+                    <option value="5">5월</option>
+                    <option value="6">6월</option>
+                    <option value="7">7월</option>
+                    <option value="8">8월</option>
+                    <option value="9">9월</option>
+                    <option value="10">10월</option>
+                    <option value="11">11월</option>
+                    <option value="12">12월</option>
+                  </select>
+                  <div class="unit-label">월</div>
+                </div>
+                <div>
+                  <select name="2.일">
+                    <option value="" disabled selected>일</option>
+                    <option value="1">1일</option>
+                    <option value="2">2일</option>
+                    <option value="3">3일</option>
+                    <option value="4">4일</option>
+                    <option value="5">5일</option>
+                    <option value="6">6일</option>
+                    <option value="7">7일</option>
+                    <option value="8">8일</option>
+                    <option value="9">9일</option>
+                    <option value="10">10일</option>
+                    <option value="11">11일</option>
+                    <option value="12">12일</option>
+                    <option value="13">13일</option>
+                    <option value="14">14일</option>
+                    <option value="15">15일</option>
+                    <option value="16">16일</option>
+                    <option value="17">17일</option>
+                    <option value="18">18일</option>
+                    <option value="19">19일</option>
+                    <option value="20">20일</option>
+                    <option value="21">21일</option>
+                    <option value="22">22일</option>
+                    <option value="23">23일</option>
+                    <option value="24">24일</option>
+                    <option value="25">25일</option>
+                    <option value="26">26일</option>
+                    <option value="27">27일</option>
+                    <option value="28">28일</option>
+                    <option value="29">29일</option>
+                    <option value="30">30일</option>
+                    <option value="31">31일</option>
+                  </select>
+                  <div class="unit-label">일</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>태어난 시간</label>
+              <div class="time-row">
+                <div>
+                  <select name="2.시">
+                    <option value="" disabled selected>시</option>
+                    <option value="0">0시 (자시)</option>
+                    <option value="1">1시</option>
+                    <option value="2">2시</option>
+                    <option value="3">3시 (인시)</option>
+                    <option value="4">4시</option>
+                    <option value="5">5시 (묘시)</option>
+                    <option value="6">6시</option>
+                    <option value="7">7시 (진시)</option>
+                    <option value="8">8시</option>
+                    <option value="9">9시 (사시)</option>
+                    <option value="10">10시</option>
+                    <option value="11">11시 (오시)</option>
+                    <option value="12">12시</option>
+                    <option value="13">13시 (미시)</option>
+                    <option value="14">14시</option>
+                    <option value="15">15시 (신시)</option>
+                    <option value="16">16시</option>
+                    <option value="17">17시 (유시)</option>
+                    <option value="18">18시</option>
+                    <option value="19">19시 (술시)</option>
+                    <option value="20">20시</option>
+                    <option value="21">21시 (해시)</option>
+                    <option value="22">22시</option>
+                    <option value="23">23시</option>
+                  </select>
+                  <div class="unit-label">시</div>
+                </div>
+                <div>
+                  <select name="2.분">
+                    <option value="" disabled selected>분</option>
+                    <option value="0">0분</option>
+                    <option value="5">5분</option>
+                    <option value="10">10분</option>
+                    <option value="15">15분</option>
+                    <option value="20">20분</option>
+                    <option value="25">25분</option>
+                    <option value="30">30분</option>
+                    <option value="35">35분</option>
+                    <option value="40">40분</option>
+                    <option value="45">45분</option>
+                    <option value="50">50분</option>
+                    <option value="55">55분</option>
+                  </select>
+                  <div class="unit-label">분</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>두 사람의 궁합에 대해 궁금하신 점</label>
+              <textarea name="2.추가질문" placeholder="궁합에 대해 특별히 알고 싶은 부분이 있으시면 적어주세요."></textarea>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- SUBMIT -->
+    <div class="submit-section">
+      <div class="form-divider"></div>
+      <button type="submit" class="submit-btn">상 담 신 청</button>
+      <p class="submit-note">
+        입력하신 정보는 사주 분석 목적으로만 사용되며,<br>
+        상담 완료 후 자동으로 삭제됩니다.
+      </p>
+    </div>
+
+  </form>
+
+  <!-- FOOTER -->
+  <div class="form-footer">
+    <p>운담명원 &nbsp;&middot;&nbsp; KOREAN SHAMEN</p>
+  </div>
+
+</div>
+
+<script>
+  function toggleGunghap() {
+    const section = document.getElementById('gunghapSection');
+    const arrow = document.getElementById('toggleArrow');
+    section.classList.toggle('open');
+    arrow.style.transform = section.classList.contains('open') ? 'rotate(180deg)' : 'rotate(0deg)';
+  }
+
+  document.getElementById('sajuForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+    const data = {};
+    formData.forEach((value, key) => {
+      data[key] = value;
+    });
+
+    const gunghapSection = document.getElementById('gunghapSection');
+    data['is궁합'] = gunghapSection.classList.contains('open') &&
+      (data['2.이름'] || data['2.년']);
+
+    console.log('Form Data:', JSON.stringify(data, null, 2));
+    alert('상담 신청이 접수되었습니다.\n확인 후 결과를 보내드리겠습니다.');
+  });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,345 @@
+{
+  "name": "Kinohi 바디미스트 AI UGC 리뷰영상 30초",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "kinohi-ugc-review",
+        "authentication": "none",
+        "responseMode": "lastNode"
+      },
+      "id": "node-webhook",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [220, 300]
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            {"id": "a1", "name": "brand", "value": "Kinohi", "type": "string"},
+            {"id": "a2", "name": "product", "value": "키노히 바디미스트 santal", "type": "string"},
+            {"id": "a3", "name": "price", "value": "30,000원", "type": "string"},
+            {"id": "a4", "name": "product_description", "value": "이른 아침 산속에서 깨어나 첫 숨을 들이 마실 때, 청량한 공기 속에서 살짝 젖은 잔디와 중후한 나무껍질의 향이 어우러져 시원하면서도 성숙한 고요함을 느낄 수 있는 향. 향 노트: cardamon, violet, sandal wood. 용량 200ml. MADE IN KOREA.", "type": "string"},
+            {"id": "a5", "name": "reviews_summary", "value": "1) 모공각화증에 바디미스트 좋다고 구매, 로션보다 훨씬 간편하고 흡수 좋음, 모공각화증 개선 체감, 향 만족 (별점5, 29CM). 2) 건조해서 각질 생겼는데 뿌리자마자 수분감 싹 덮음, 끈적임 없이 바로 스며듦, 바디크림 대체 추천 (별점5, 스마트스토어). 3) 분사력 좋고 은은한 향이 퍼짐, 향수 대신 데일리 사용 만족, 여름에 딱 (별점5, 자사몰). 4) 보습감 수분력 유지 좋음, 잠도 잘 오고 편안한 느낌, 심신의 안정, 재구매 의사 (별점5, 스마트스토어). 고객만족도 4.95/5.0.", "type": "string"},
+            {"id": "a6", "name": "selling_points", "value": "SP1: 모공각화증 케어 효과 체감 | SP2: 바디크림 대체 (간편함) | SP3: 즉각 보습 + 끈적임 ZERO | SP4: 은은한 향 = 향수 대체 | SP5: 수면 전 루틴 / 심신 안정", "type": "string"}
+          ]
+        }
+      },
+      "id": "node-set-product",
+      "name": "제품 데이터 세팅",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [440, 300]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are a Korean UGC review video script writer for beauty/skincare products.\n\nProduct: {{ $json.product }}\nBrand: {{ $json.brand }}\nPrice: {{ $json.price }}\nProduct Description: {{ $json.product_description }}\nReal Customer Reviews Summary: {{ $json.reviews_summary }}\nKey Selling Points: {{ $json.selling_points }}\n\nWrite a natural, conversational Korean narration script for a 30-second Instagram Reels UGC review video.\n\nRULES:\n- Write in casual, friendly Korean (반말/친근한 톤) as if a real 20s Korean woman is sharing her honest review\n- Must be 150~200 characters in Korean (about 25~30 seconds when spoken)\n- Start with a strong HOOK in the first sentence that grabs attention (pain point or surprising benefit)\n- Include at least 2 specific selling points from the reviews naturally\n- End with a recommendation + product name\n- Do NOT sound like an advertisement. Sound like a real person sharing their experience\n- Do NOT use formal language or marketing jargon\n\nOutput ONLY a JSON object with these fields:\n{\n  \"script\": \"the full Korean narration text\",\n  \"hook\": \"the first sentence only\",\n  \"selling_points_used\": [\"SP1\", \"SP3\"],\n  \"tone\": \"casual\",\n  \"estimated_seconds\": 25\n}\n\nOutput ONLY valid JSON. No markdown, no explanation."
+      },
+      "id": "node-ai-script",
+      "name": "AI 나레이션 스크립트 작성",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [660, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const aiOutput = $input.first().json.text || $input.first().json.output || JSON.stringify($input.first().json);\nlet parsed;\ntry {\n  const jsonMatch = aiOutput.match(/\\{[\\s\\S]*\\}/);\n  parsed = JSON.parse(jsonMatch[0]);\n} catch(e) {\n  parsed = {\n    script: aiOutput,\n    hook: '',\n    selling_points_used: ['SP1', 'SP3'],\n    tone: 'casual',\n    estimated_seconds: 25\n  };\n}\n\nconst productData = $('제품 데이터 세팅').first().json;\n\nreturn [{ json: {\n  script: parsed.script,\n  hook: parsed.hook,\n  selling_points_used: parsed.selling_points_used,\n  tone: parsed.tone,\n  estimated_seconds: parsed.estimated_seconds,\n  brand: productData.brand,\n  product: productData.product,\n  price: productData.price\n}}];"
+      },
+      "id": "node-parse-script",
+      "name": "스크립트 JSON 파싱",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [880, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.kie.ai/api/v1/flux/kontext/generate",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "contentType": "json",
+        "bodyParametersJson": "{\n  \"prompt\": \"Front-facing portrait photograph of a natural-looking young Korean woman aged 24 in a bright clean modern bathroom, wearing a simple white cotton t-shirt, slightly damp hair loosely tied back, minimal no-makeup makeup look, looking directly at camera with friendly approachable expression and slight natural smile, soft diffused natural daylight from window on left, clean modern bathroom background slightly out of focus, shot on Sony A7IV with Sony FE 35mm f1.4 GM at f2.0, ISO 400, color temperature 5200K, medium close-up from chest up, hyper-realistic photorealistic photograph indistinguishable from real DSLR photo, ultra-detailed skin texture with visible pores and micro skin imperfections and fine peach fuzz hair and natural skin blemishes and subtle freckles, real human skin subsurface scattering with natural blood vessel undertones, individual hair strands visible with natural flyaway hairs, eyes with detailed iris fibers and natural eye moisture reflection, natural asymmetric facial features, natural lip texture with visible lip lines, realistic depth of field with optical bokeh, natural film grain, absolutely ZERO artificial smooth airbrushed plastic skin, ZERO uncanny valley effect, ZERO CGI render look, ZERO digital art style, ZERO perfect symmetry, must pass as genuine unedited photograph\",\n  \"model\": \"flux-kontext-pro\",\n  \"aspectRatio\": \"9:16\",\n  \"outputFormat\": \"png\",\n  \"enableTranslation\": false,\n  \"safetyTolerance\": 2\n}"
+      },
+      "id": "node-gen-image",
+      "name": "인물 이미지 생성 (Flux Kontext)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [1100, 180],
+      "credentials": {}
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.elevenlabs.io/v1/text-to-speech/YOUR_KOREAN_VOICE_ID",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "contentType": "json",
+        "bodyParametersJson": "={\n  \"text\": \"{{ $json.script }}\",\n  \"model_id\": \"eleven_multilingual_v2\",\n  \"voice_settings\": {\n    \"stability\": 0.45,\n    \"similarity_boost\": 0.70,\n    \"style\": 0.35,\n    \"use_speaker_boost\": true\n  }\n}"
+      },
+      "id": "node-tts",
+      "name": "TTS 나레이션 생성 (ElevenLabs)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [1100, 420],
+      "credentials": {}
+    },
+    {
+      "parameters": {
+        "resume": "timeInterval",
+        "amount": 30,
+        "unit": "seconds"
+      },
+      "id": "node-wait-image",
+      "name": "이미지 생성 대기 30초",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [1320, 180]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://api.kie.ai/api/v1/task/{{ $('인물 이미지 생성 (Flux Kontext)').item.json.data.taskId }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth"
+      },
+      "id": "node-poll-image",
+      "name": "이미지 결과 조회",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [1540, 180],
+      "credentials": {}
+    },
+    {
+      "parameters": {
+        "method": "PUT",
+        "url": "=https://your-bucket.s3.amazonaws.com/kinohi-ugc/narration_{{ Date.now() }}.mp3",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "contentType": "binaryData"
+      },
+      "id": "node-upload-mp3",
+      "name": "MP3 호스팅 업로드",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [1320, 420],
+      "credentials": {}
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineAll"
+      },
+      "id": "node-merge",
+      "name": "이미지+오디오 합치기",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [1760, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.kie.ai/api/v1/jobs/createTask",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "contentType": "json",
+        "bodyParametersJson": "={\n  \"model\": \"infinitalk/from-audio\",\n  \"params\": {\n    \"image_url\": \"{{ $json.data.info.resultUrls[0] }}\",\n    \"audio_url\": \"{{ $json.uploaded_url }}\",\n    \"prompt\": \"Natural Korean woman in her 20s speaking casually and expressively to camera in bathroom setting, subtle head movements, natural blinking, friendly facial expressions matching conversational review tone, slight smile, relaxed shoulders\",\n    \"resolution\": \"720p\",\n    \"seed\": 42\n  }\n}"
+      },
+      "id": "node-talking",
+      "name": "토킹 아바타 생성 (InfiniteTalk)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [1980, 300],
+      "credentials": {}
+    },
+    {
+      "parameters": {
+        "resume": "timeInterval",
+        "amount": 60,
+        "unit": "seconds"
+      },
+      "id": "node-wait-talking",
+      "name": "토킹 영상 대기 60초",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [2200, 300]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://api.kie.ai/api/v1/task/{{ $('토킹 아바타 생성 (InfiniteTalk)').item.json.data.taskId }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth"
+      },
+      "id": "node-poll-talking",
+      "name": "토킹 영상 결과 조회",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [2420, 300],
+      "credentials": {}
+    },
+    {
+      "parameters": {
+        "jsCode": "const talkingVideoUrl = $input.first().json.data?.info?.resultUrls?.[0] || 'pending';\n\nconst brolls = [\n  {\n    id: 'broll_1',\n    name: '제품 클로즈업',\n    prompt: 'Vertical 9:16 cinematic close-up shot of a Kinohi body mist santal frosted glass bottle being held in a young womans hand, fingers gently wrapped around bottle, minimalist KINOHI branding clearly visible on label, soft warm bathroom lighting, bottle has subtle sage green to cream gradient, clean white bathroom counter background blurred, slow subtle rotation, shot on Sony A7RV with 90mm macro at f2.8, ISO 200, 4800K, hyper-realistic footage indistinguishable from real cinema camera, natural motion blur, ZERO AI-generated look, must pass as genuine footage'\n  },\n  {\n    id: 'broll_2',\n    name: '팔에 미스트 뿌리기',\n    prompt: 'Vertical 9:16 close-up of young Korean woman spraying body mist onto bare forearm in bright modern bathroom, fine mist particles catching soft window light creating beautiful spray effect, skin slightly damp from shower with water droplets, delicate mist cloud around arm, white bathrobe sleeve rolled up, camera slightly above looking down, Canon EOS R5 RF 50mm f1.2 at f2.0, ISO 400, 5000K, hyper-realistic footage, ultra-detailed skin visible pores natural texture, ZERO smooth plastic skin, ZERO uncanny valley, must pass as genuine footage'\n  },\n  {\n    id: 'broll_3',\n    name: '피부 흡수 클로즈업',\n    prompt: 'Vertical 9:16 extreme close-up macro of Korean woman forearm skin after applying body mist, natural healthy dewy glow with micro water droplets absorbed into skin, fine skin texture and natural pores incredible detail, moisture creates subtle sheen settling into skin showing absorption, soft warm diffused lighting, Canon EOS R5 RF 100mm f2.8L Macro at f4.0, ISO 320, 5000K, hyper-realistic footage, ultra-detailed skin visible pores, ZERO smooth plastic skin, ZERO AI look, must pass as genuine footage'\n  },\n  {\n    id: 'broll_4',\n    name: '손목 향 맡기',\n    prompt: 'Vertical 9:16 medium close-up of young Korean woman spraying body mist on inner wrist then gently bringing wrist to nose with eyes slightly closed and subtle pleased smile, soft natural daylight clean bedroom, casual comfortable outfit, genuine enjoyment of fragrance, Sony A7IV 35mm f1.4 GM at f2.0, ISO 400, 5200K, hyper-realistic footage, ultra-detailed skin visible pores micro expressions, realistic hair physics, ZERO smooth plastic skin, ZERO uncanny valley, must pass as genuine footage'\n  },\n  {\n    id: 'broll_5',\n    name: '엔딩 제품샷',\n    prompt: 'Vertical 9:16 elegant product shot Kinohi body mist santal bottle upright on light natural wood surface, soft morning sunlight from right golden highlights on frosted glass, dried cardamom pods and sandalwood chips beside bottle, sage green cream palette, clean bright background soft shadows, KINOHI santal text clearly readable, Hasselblad X2D 100C XCD 90mm f4.0, ISO 100, 5000K, hyper-realistic product photography indistinguishable from real studio photo, ultra-detailed material textures, realistic glass refraction reflection, ZERO CGI render, must pass as genuine product photo'\n  }\n];\n\nreturn brolls.map(b => ({ json: { ...b, talkingVideoUrl } }));"
+      },
+      "id": "node-broll-code",
+      "name": "B-Roll 프롬프트 5개 생성",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2640, 300]
+    },
+    {
+      "parameters": {
+        "batchSize": 1
+      },
+      "id": "node-loop-broll",
+      "name": "B-Roll 순차 생성 루프",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [2860, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.kie.ai/api/v1/veo/generate",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "contentType": "json",
+        "bodyParametersJson": "={\n  \"prompt\": \"{{ $json.prompt }}\",\n  \"model\": \"veo3_fast\",\n  \"aspect_ratio\": \"9:16\",\n  \"enableTranslation\": false\n}"
+      },
+      "id": "node-gen-broll",
+      "name": "B-Roll 영상 생성 (Veo 3.1)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [3080, 180],
+      "credentials": {}
+    },
+    {
+      "parameters": {
+        "resume": "timeInterval",
+        "amount": 90,
+        "unit": "seconds"
+      },
+      "id": "node-wait-broll",
+      "name": "B-Roll 대기 90초",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [3300, 180]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://api.kie.ai/api/v1/task/{{ $('B-Roll 영상 생성 (Veo 3.1)').item.json.data.taskId }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth"
+      },
+      "id": "node-poll-broll",
+      "name": "B-Roll 결과 조회",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [3520, 180],
+      "credentials": {}
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nconst scriptData = $('스크립트 JSON 파싱').first().json;\n\nconst brollUrls = items.map((item, i) => {\n  return item.json.data?.info?.resultUrls?.[0] || 'generation_pending';\n});\n\nreturn [{ json: {\n  script_text: scriptData.script,\n  hook: scriptData.hook,\n  tone: scriptData.tone,\n  selling_points_used: JSON.stringify(scriptData.selling_points_used),\n  talking_video_url: items[0]?.json?.talkingVideoUrl || 'pending',\n  broll_1_product_closeup: brollUrls[0] || '',\n  broll_2_spray_arm: brollUrls[1] || '',\n  broll_3_absorption: brollUrls[2] || '',\n  broll_4_wrist_smell: brollUrls[3] || '',\n  broll_5_ending_shot: brollUrls[4] || '',\n  brand: scriptData.brand,\n  product: scriptData.product,\n  created_at: new Date().toISOString(),\n  status: 'generated'\n}}];"
+      },
+      "id": "node-aggregate",
+      "name": "전체 결과 집계",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [3740, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems"
+      },
+      "id": "node-respond",
+      "name": "Webhook 응답 반환",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [3960, 300]
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [[{"node": "제품 데이터 세팅", "type": "main", "index": 0}]]
+    },
+    "제품 데이터 세팅": {
+      "main": [[{"node": "AI 나레이션 스크립트 작성", "type": "main", "index": 0}]]
+    },
+    "AI 나레이션 스크립트 작성": {
+      "main": [[{"node": "스크립트 JSON 파싱", "type": "main", "index": 0}]]
+    },
+    "스크립트 JSON 파싱": {
+      "main": [[
+        {"node": "인물 이미지 생성 (Flux Kontext)", "type": "main", "index": 0},
+        {"node": "TTS 나레이션 생성 (ElevenLabs)", "type": "main", "index": 0}
+      ]]
+    },
+    "인물 이미지 생성 (Flux Kontext)": {
+      "main": [[{"node": "이미지 생성 대기 30초", "type": "main", "index": 0}]]
+    },
+    "이미지 생성 대기 30초": {
+      "main": [[{"node": "이미지 결과 조회", "type": "main", "index": 0}]]
+    },
+    "이미지 결과 조회": {
+      "main": [[{"node": "이미지+오디오 합치기", "type": "main", "index": 0}]]
+    },
+    "TTS 나레이션 생성 (ElevenLabs)": {
+      "main": [[{"node": "MP3 호스팅 업로드", "type": "main", "index": 0}]]
+    },
+    "MP3 호스팅 업로드": {
+      "main": [[{"node": "이미지+오디오 합치기", "type": "main", "index": 1}]]
+    },
+    "이미지+오디오 합치기": {
+      "main": [[{"node": "토킹 아바타 생성 (InfiniteTalk)", "type": "main", "index": 0}]]
+    },
+    "토킹 아바타 생성 (InfiniteTalk)": {
+      "main": [[{"node": "토킹 영상 대기 60초", "type": "main", "index": 0}]]
+    },
+    "토킹 영상 대기 60초": {
+      "main": [[{"node": "토킹 영상 결과 조회", "type": "main", "index": 0}]]
+    },
+    "토킹 영상 결과 조회": {
+      "main": [[{"node": "B-Roll 프롬프트 5개 생성", "type": "main", "index": 0}]]
+    },
+    "B-Roll 프롬프트 5개 생성": {
+      "main": [[{"node": "B-Roll 순차 생성 루프", "type": "main", "index": 0}]]
+    },
+    "B-Roll 순차 생성 루프": {
+      "main": [
+        [{"node": "B-Roll 영상 생성 (Veo 3.1)", "type": "main", "index": 0}],
+        [{"node": "전체 결과 집계", "type": "main", "index": 0}]
+      ]
+    },
+    "B-Roll 영상 생성 (Veo 3.1)": {
+      "main": [[{"node": "B-Roll 대기 90초", "type": "main", "index": 0}]]
+    },
+    "B-Roll 대기 90초": {
+      "main": [[{"node": "B-Roll 결과 조회", "type": "main", "index": 0}]]
+    },
+    "B-Roll 결과 조회": {
+      "main": [[{"node": "B-Roll 순차 생성 루프", "type": "main", "index": 0}]]
+    },
+    "전체 결과 집계": {
+      "main": [[{"node": "Webhook 응답 반환", "type": "main", "index": 0}]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {},
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 1,
+  "active": false
+}

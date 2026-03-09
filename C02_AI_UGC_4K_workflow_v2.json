@@ -1,0 +1,1192 @@
+{
+  "name": "콘텐츠 마이닝 C.02 - AI UGC 4K 극사실 리뷰영상 v1",
+  "nodes": [
+    {
+      "id": "form-trigger",
+      "name": "Form Trigger",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.5,
+      "position": [
+        0,
+        300
+      ],
+      "parameters": {
+        "formTitle": "AI UGC 4K 극사실 리뷰영상 생성 C.02",
+        "formDescription": "FlowPilot AI UGC 4K Hyper-Realistic Review Video Generator v1",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "브랜드명",
+              "fieldType": "text",
+              "requiredField": true,
+              "placeholder": "예: Kinohi"
+            },
+            {
+              "fieldLabel": "제품명",
+              "fieldType": "text",
+              "requiredField": true,
+              "placeholder": "예: 편백 바디미스트"
+            },
+            {
+              "fieldLabel": "제품 가격",
+              "fieldType": "text",
+              "requiredField": true,
+              "placeholder": "예: 29,000원"
+            },
+            {
+              "fieldLabel": "제품 이미지 URL (메인)",
+              "fieldType": "text",
+              "requiredField": true,
+              "placeholder": "https://..."
+            },
+            {
+              "fieldLabel": "제품 이미지 URL (서브)",
+              "fieldType": "text",
+              "requiredField": false,
+              "placeholder": "https://... (선택사항)"
+            },
+            {
+              "fieldLabel": "제품 핵심 성분/특징",
+              "fieldType": "textarea",
+              "requiredField": true,
+              "placeholder": "예: 제주 편백수 92%, 미스트 타입, 보습+진정"
+            },
+            {
+              "fieldLabel": "제품 카테고리",
+              "fieldType": "dropdown",
+              "requiredField": true,
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "토너"
+                  },
+                  {
+                    "option": "에센스"
+                  },
+                  {
+                    "option": "크림"
+                  },
+                  {
+                    "option": "미스트/분사형"
+                  },
+                  {
+                    "option": "디바이스"
+                  },
+                  {
+                    "option": "앰플"
+                  },
+                  {
+                    "option": "로션"
+                  },
+                  {
+                    "option": "스틱형"
+                  },
+                  {
+                    "option": "향수"
+                  },
+                  {
+                    "option": "펌프형"
+                  }
+                ]
+              }
+            },
+            {
+              "fieldLabel": "영상 스타일",
+              "fieldType": "dropdown",
+              "requiredField": true,
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "리뷰"
+                  },
+                  {
+                    "option": "언박싱"
+                  },
+                  {
+                    "option": "튜토리얼"
+                  },
+                  {
+                    "option": "비포애프터"
+                  }
+                ]
+              }
+            },
+            {
+              "fieldLabel": "BGM 분위기",
+              "fieldType": "dropdown",
+              "requiredField": true,
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "잔잔한"
+                  },
+                  {
+                    "option": "신나는"
+                  },
+                  {
+                    "option": "감성적"
+                  },
+                  {
+                    "option": "없음"
+                  }
+                ]
+              }
+            },
+            {
+              "fieldLabel": "타겟 길이(초)",
+              "fieldType": "number",
+              "requiredField": true,
+              "placeholder": "30"
+            },
+            {
+              "fieldLabel": "리뷰 톤/분위기 지시",
+              "fieldType": "textarea",
+              "requiredField": false,
+              "placeholder": "예: 20대 여성, 솔직하고 친근한 톤, 편백 향 강조"
+            }
+          ]
+        },
+        "responseMode": "onReceived"
+      },
+      "webhookId": "c02-ugc-4k"
+    },
+    {
+      "id": "set-images",
+      "name": "기존 이미지 세팅",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        300,
+        300
+      ],
+      "parameters": {
+        "mode": "manual",
+        "duplicateItem": false,
+        "assignments": {
+          "assignments": [
+            {
+              "id": "brand",
+              "name": "brand",
+              "value": "={{ $json['브랜드명'] }}",
+              "type": "string"
+            },
+            {
+              "id": "product",
+              "name": "product",
+              "value": "={{ $json['제품명'] }}",
+              "type": "string"
+            },
+            {
+              "id": "price",
+              "name": "price",
+              "value": "={{ $json['제품 가격'] }}",
+              "type": "string"
+            },
+            {
+              "id": "image_main_url",
+              "name": "image_main_url",
+              "value": "={{ $json['제품 이미지 URL (메인)'] }}",
+              "type": "string"
+            },
+            {
+              "id": "image_sub_url",
+              "name": "image_sub_url",
+              "value": "={{ $json['제품 이미지 URL (서브)'] }}",
+              "type": "string"
+            },
+            {
+              "id": "product_features",
+              "name": "product_features",
+              "value": "={{ $json['제품 핵심 성분/특징'] }}",
+              "type": "string"
+            },
+            {
+              "id": "category",
+              "name": "category",
+              "value": "={{ $json['제품 카테고리'] }}",
+              "type": "string"
+            },
+            {
+              "id": "video_style",
+              "name": "video_style",
+              "value": "={{ $json['영상 스타일'] }}",
+              "type": "string"
+            },
+            {
+              "id": "bgm_mood",
+              "name": "bgm_mood",
+              "value": "={{ $json['BGM 분위기'] }}",
+              "type": "string"
+            },
+            {
+              "id": "target_duration",
+              "name": "target_duration",
+              "value": "={{ $json['타겟 길이(초)'] }}",
+              "type": "number"
+            },
+            {
+              "id": "review_tone",
+              "name": "review_tone",
+              "value": "={{ $json['리뷰 톤/분위기 지시'] }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": false
+      }
+    },
+    {
+      "id": "director-ai",
+      "name": "Director AI 스크립트 기획",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        600,
+        300
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"claude-sonnet-4-20250514\",\n  \"max_tokens\": 8000,\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"You are a world-class K-beauty AI UGC video director. Create a detailed video script for a {{ $json.target_duration || 30 }}-second Instagram Reels review video.\\n\\nPRODUCT INFO:\\n- Brand: {{ $json.brand }}\\n- Product: {{ $json.product }}\\n- Price: {{ $json.price }}\\n- Category: {{ $json.category }}\\n- Key Features: {{ $json.product_features }}\\n- Product Image URL (main): {{ $json.image_main_url }}\\n- Product Image URL (sub): {{ $json.image_sub_url }}\\n\\nVIDEO STYLE: {{ $json.video_style }}\\nREVIEW TONE: {{ $json.review_tone || 'Natural, friendly, honest Korean woman in her 20s' }}\\n\\nSEGMENT TYPE RULES:\\n- TALKING: Avatar speaks directly to camera. Use for hook, key message, CTA. Kling Avatar Pro (max 5sec each).\\n- BROLL_PRODUCT: Product-only close-up shots. No person. Kling 3.0 Pro T2V (max 5sec).\\n- BROLL_INTERACTION: Person physically using the product on skin. Kling 3.0 Pro I2V (max 5sec).\\n- BROLL_LIFESTYLE: Lifestyle/mood shots. No product. Kling 3.0 Pro T2V (max 5sec).\\n\\nDISTRIBUTION FOR {{ $json.target_duration || 30 }}sec:\\n- TALKING: 3 segments (~15sec total)\\n- BROLL_PRODUCT: 1-2 segments (~5sec)\\n- BROLL_INTERACTION: 1-2 segments (~5sec)\\n- BROLL_LIFESTYLE: 0-1 segment (~3sec)\\n\\nPRODUCT INTERACTION GUIDE BY CATEGORY:\\n- 토너/에센스/앰플: gently patting product onto cheek with fingertips, visible moisture on skin surface\\n- 크림/로션: scooping cream from jar with fingers, spreading on forearm in circular motion\\n- 미스트/분사형: spraying mist onto inner wrist from 15cm distance, fine mist particles visible in backlight\\n- 향수: spraying fragrance onto pulse point of wrist, tilting wrist to nose\\n- 디바이스: pressing cleansing device against cheek, gentle circular motion on skin\\n- 스틱형: gliding stick applicator along jawline, product leaving subtle sheen on skin\\n- 펌프형: pressing pump dispenser twice, product pooling in palm of hand\\n\\n=== HYPER-REALISM MANDATORY RULES ===\\nRULE 1: EVERY avatar_prompt MUST end with: hyper-realistic footage indistinguishable from real camera capture, ultra-detailed skin with visible pores and micro expressions and natural skin texture movement during motion, realistic hair physics with individual strands responding to movement and gravity naturally, natural subtle body micro-movements like breathing pulse and muscle tension shifts, realistic eye movement with natural blink rate and eye moisture and pupil dilation, natural motion blur consistent with real camera shutter speed, absolutely ZERO artificial smooth plastic skin, ZERO uncanny valley, ZERO AI-generated look, ZERO robotic stiff movement, must pass as genuine footage from professional cinema camera\\nRULE 2: EVERY broll_prompt MUST end with: shot on Sony A7R V with Sony FE 85mm f/1.4 GM lens at f/2.0, ISO 400, 5600K color temperature, hyper-realistic photorealistic footage indistinguishable from real DSLR capture, ultra-detailed material textures with visible surface micro-texture and natural light interaction, realistic shadow falloff with natural ambient occlusion, natural film grain, absolutely ZERO CGI render look, ZERO 3D modeling aesthetic, must pass as genuine footage from professional camera\\nRULE 3: EVERY interaction_prompt MUST end with: hyper-realistic 4K footage of real person using the product, visible skin pores and individual fine arm hair catching light, natural hand movement with realistic finger joint articulation and nail texture, product physically contacting skin with visible pressure deformation, warm golden hour side lighting at 4500K, shot on Arri Alexa Mini LF with Cooke Anamorphic 40mm at T2.0, natural film grain ISO 800, absolutely ZERO AI-generated look, ZERO smooth plastic skin, ZERO uncanny valley, must pass as genuine beauty commercial footage\\nRULE 4: FORBIDDEN - never use: smooth skin, perfect face, beautiful lighting, high quality alone, 4K alone without camera model\\n=== END RULES ===\\n\\nRETURN ONLY a valid JSON array. Each element:\\n{\\n  \\\"timeline_id\\\": number,\\n  \\\"section\\\": \\\"hook|problem|solution|benefit|interaction|cta\\\",\\n  \\\"segment_type\\\": \\\"TALKING|BROLL_PRODUCT|BROLL_INTERACTION|BROLL_LIFESTYLE\\\",\\n  \\\"time_range\\\": \\\"M:SS-M:SS\\\",\\n  \\\"tts_text\\\": \\\"Korean text for TTS (TALKING only, empty for BROLL)\\\",\\n  \\\"tts_emotion\\\": \\\"excited|calm|curious|satisfied|warm (TALKING only)\\\",\\n  \\\"avatar_prompt\\\": \\\"detailed English prompt (TALKING only)\\\",\\n  \\\"broll_prompt\\\": \\\"detailed English prompt (BROLL_PRODUCT/LIFESTYLE only)\\\",\\n  \\\"interaction_prompt\\\": \\\"detailed English prompt (BROLL_INTERACTION only)\\\",\\n  \\\"broll_name\\\": \\\"short English name for the clip\\\"\\n}\\n\\nReturn ONLY the JSON array, no markdown, no explanation.\"\n    }\n  ]\n}",
+        "options": {
+          "timeout": 120000
+        }
+      }
+    },
+    {
+      "id": "parse-director",
+      "name": "Director 출력 파싱",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        900,
+        300
+      ],
+      "parameters": {
+        "jsCode": "const aiOutput = $input.first().json;\nlet parsed;\ntry {\n  let raw = '';\n  if (aiOutput.content && Array.isArray(aiOutput.content)) {\n    for (const block of aiOutput.content) {\n      if (block.type === 'text') {\n        raw += block.text;\n      }\n    }\n  } else if (typeof aiOutput.output === 'string') {\n    raw = aiOutput.output;\n  } else {\n    raw = JSON.stringify(aiOutput);\n  }\n  const jsonMatch = raw.match(/\\[[\\s\\S]*\\]/);\n  if (jsonMatch) {\n    parsed = JSON.parse(jsonMatch[0]);\n  } else {\n    throw new Error('JSON array not found in output');\n  }\n} catch(e) {\n  return [{ json: { error: 'Failed to parse Director AI output: ' + e.message, raw: JSON.stringify(aiOutput).substring(0, 500) } }];\n}\n\nconst staticData = $getWorkflowStaticData('global');\nstaticData.director_segments = parsed;\nstaticData.total_segments = parsed.length;\nstaticData.completed_segments = 0;\nstaticData.all_results = [];\n\nconst results = [];\nfor (const seg of parsed) {\n  results.push({\n    json: {\n      timeline_id: seg.timeline_id,\n      section: seg.section || '',\n      segment_type: seg.segment_type || 'TALKING',\n      time_range: seg.time_range || '',\n      tts_text: seg.tts_text || '',\n      tts_emotion: seg.tts_emotion || '',\n      avatar_prompt: seg.avatar_prompt || '',\n      broll_prompt: seg.broll_prompt || '',\n      interaction_prompt: seg.interaction_prompt || '',\n      broll_name: seg.broll_name || '',\n      brand: $('기존 이미지 세팅').first().json.brand || '',\n      product: $('기존 이미지 세팅').first().json.product || '',\n      price: $('기존 이미지 세팅').first().json.price || '',\n      image_main_url: $('기존 이미지 세팅').first().json.image_main_url || '',\n      image_sub_url: $('기존 이미지 세팅').first().json.image_sub_url || '',\n      category: $('기존 이미지 세팅').first().json.category || '',\n      video_style: $('기존 이미지 세팅').first().json.video_style || '',\n      bgm_mood: $('기존 이미지 세팅').first().json.bgm_mood || '',\n      target_duration: $('기존 이미지 세팅').first().json.target_duration || 30\n    }\n  });\n}\nreturn results;"
+      }
+    },
+    {
+      "id": "tts-filter",
+      "name": "TTS 세그먼트 필터링",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1200,
+        100
+      ],
+      "parameters": {
+        "jsCode": "const items = $input.all();\nconst ttsItems = items.filter(item => item.json.segment_type === 'TALKING' && item.json.tts_text && item.json.tts_text.trim() !== '');\nreturn ttsItems;"
+      }
+    },
+    {
+      "id": "tts-loop",
+      "name": "TTS 순차 루프",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        1500,
+        100
+      ],
+      "parameters": {
+        "batchSize": 1,
+        "options": {}
+      }
+    },
+    {
+      "id": "tts-generate",
+      "name": "TTS 생성 (Typecast)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1800,
+        100
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://typecast.ai/api/speak",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"text\": \"{{ $json.tts_text }}\",\n  \"lang\": \"ko\",\n  \"actor_id\": \"YOUR_TYPECAST_ACTOR_ID\",\n  \"xapi_hd\": true,\n  \"model_version\": \"latest\",\n  \"emotion\": \"{{ $json.tts_emotion || 'neutral' }}\"\n}",
+        "options": {
+          "timeout": 60000
+        }
+      }
+    },
+    {
+      "id": "tts-url-extract",
+      "name": "TTS URL 추출",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2100,
+        100
+      ],
+      "parameters": {
+        "jsCode": "const result = $input.first().json;\nconst loopItem = $('TTS 순차 루프').first().json;\n\nlet audioUrl = '';\nif (result.result && result.result.audio_download_url) {\n  audioUrl = result.result.audio_download_url;\n} else if (result.audio_download_url) {\n  audioUrl = result.audio_download_url;\n} else if (result.result && result.result.url) {\n  audioUrl = result.result.url;\n} else if (result.url) {\n  audioUrl = result.url;\n}\n\nconst staticData = $getWorkflowStaticData('global');\nif (!staticData.tts_audio_map) {\n  staticData.tts_audio_map = {};\n}\nstaticData.tts_audio_map[loopItem.timeline_id] = audioUrl;\n\nreturn [{\n  json: {\n    timeline_id: loopItem.timeline_id,\n    audio_url: audioUrl,\n    segment_type: loopItem.segment_type,\n    tts_text: loopItem.tts_text\n  }\n}];"
+      }
+    },
+    {
+      "id": "bgm-check",
+      "name": "BGM 필요 여부 체크",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1200,
+        300
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "bgm-cond",
+              "leftValue": "={{ $json.bgm_mood }}",
+              "rightValue": "없음",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "bgm-generate",
+      "name": "BGM 생성 (Suno V4.5)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1500,
+        300
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.kie.ai/api/v1/generate",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"suno/v4.5\",\n  \"input\": {\n    \"prompt\": \"{{ $json.bgm_mood === '잔잔한' ? 'gentle ambient Korean beauty commercial background music, soft piano and ethereal strings, warm and inviting mood, 30 seconds, no vocals, subtle and minimal' : $json.bgm_mood === '신나는' ? 'upbeat bright Korean beauty commercial music, cheerful acoustic guitar and light percussion, energetic positive mood, 30 seconds, no vocals' : $json.bgm_mood === '감성적' ? 'emotional cinematic Korean beauty music, solo piano with soft violin, intimate and touching mood, 30 seconds, no vocals' : 'gentle ambient background music, 30 seconds, no vocals' }}\",\n    \"duration\": {{ $json.target_duration || 30 }}\n  }\n}",
+        "options": {
+          "timeout": 120000
+        }
+      }
+    },
+    {
+      "id": "bgm-wait",
+      "name": "BGM 대기 (30초)",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1800,
+        300
+      ],
+      "parameters": {
+        "amount": 30,
+        "unit": "seconds"
+      }
+    },
+    {
+      "id": "bgm-poll",
+      "name": "BGM 결과 폴링",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2100,
+        300
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "=https://api.kie.ai/api/v1/task/{{ $('BGM 생성 (Suno V4.5)').first().json.task_id }}/status",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "timeout": 30000
+        }
+      }
+    },
+    {
+      "id": "bgm-done-check",
+      "name": "BGM 완료 체크",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        2400,
+        300
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "bgm-status",
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "completed",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "bgm-wait2",
+      "name": "BGM 재대기 (30초)",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        2400,
+        480
+      ],
+      "parameters": {
+        "amount": 30,
+        "unit": "seconds"
+      }
+    },
+    {
+      "id": "bgm-url-save",
+      "name": "BGM URL 저장",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2700,
+        300
+      ],
+      "parameters": {
+        "jsCode": "const result = $input.first().json;\nconst staticData = $getWorkflowStaticData('global');\n\nlet bgmUrl = '';\nif (result.output && result.output.audio_url) {\n  bgmUrl = result.output.audio_url;\n} else if (result.result && result.result.audio_url) {\n  bgmUrl = result.result.audio_url;\n} else if (result.data && result.data.audio_url) {\n  bgmUrl = result.data.audio_url;\n} else if (result.audio_url) {\n  bgmUrl = result.audio_url;\n} else {\n  const str = JSON.stringify(result);\n  const match = str.match(/https?:\\/\\/[^\"'\\s]+\\.(mp3|wav|m4a|ogg|aac)/i);\n  if (match) bgmUrl = match[0];\n}\n\nstaticData.bgm_url = bgmUrl;\n\nreturn [{ json: { bgm_url: bgmUrl, bgm_status: 'saved' } }];"
+      }
+    },
+    {
+      "id": "bgm-skip-set",
+      "name": "BGM 스킵 (없음)",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1500,
+        500
+      ],
+      "parameters": {
+        "mode": "manual",
+        "duplicateItem": false,
+        "assignments": {
+          "assignments": [
+            {
+              "id": "bgm-none",
+              "name": "bgm_url",
+              "value": "",
+              "type": "string"
+            },
+            {
+              "id": "bgm-status",
+              "name": "bgm_status",
+              "value": "skipped",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true
+      }
+    },
+    {
+      "id": "video-data-prep",
+      "name": "통합 데이터 정리",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3000,
+        300
+      ],
+      "parameters": {
+        "jsCode": "const staticData = $getWorkflowStaticData('global');\nconst directorSegments = staticData.director_segments || [];\nconst ttsAudioMap = staticData.tts_audio_map || {};\nconst bgmUrl = staticData.bgm_url || '';\n\nlet productImageUrl = '';\nlet modelImageUrl = '';\n\nfor (const seg of directorSegments) {\n  if (!productImageUrl && seg.image_main_url) {\n    productImageUrl = seg.image_main_url;\n  }\n}\n\nif (!productImageUrl) {\n  try {\n    productImageUrl = $('기존 이미지 세팅').first().json.image_main_url || '';\n  } catch(e) {}\n}\n\nconst results = [];\n\nfor (let i = 0; i < directorSegments.length; i++) {\n  const dir = directorSegments[i];\n  const segId = dir.timeline_id || (i + 1);\n  const segType = dir.segment_type || 'TALKING';\n  let generateBody = {};\n\n  if (segType === 'TALKING') {\n    generateBody = {\n      model: 'kling/ai-avatar-pro',\n      input: {\n        image_url: modelImageUrl || '',\n        audio_url: ttsAudioMap[segId] || '',\n        prompt: dir.avatar_prompt || ''\n      }\n    };\n  } else if (segType === 'BROLL_PRODUCT') {\n    generateBody = {\n      model: 'kling-3.0/video',\n      input: {\n        prompt: dir.broll_prompt || '',\n        mode: 'pro',\n        aspect_ratio: '9:16',\n        duration: 5\n      }\n    };\n  } else if (segType === 'BROLL_INTERACTION') {\n    generateBody = {\n      model: 'kling-3.0/video',\n      input: {\n        prompt: dir.interaction_prompt || '',\n        image_url: productImageUrl || '',\n        mode: 'pro',\n        aspect_ratio: '9:16',\n        duration: 5\n      }\n    };\n  } else if (segType === 'BROLL_LIFESTYLE') {\n    generateBody = {\n      model: 'kling-3.0/video',\n      input: {\n        prompt: dir.broll_prompt || '',\n        mode: 'pro',\n        aspect_ratio: '9:16',\n        duration: 5\n      }\n    };\n  }\n\n  results.push({\n    json: {\n      segment_id: segId,\n      section: dir.section || '',\n      segment_type: segType,\n      tts_text: dir.tts_text || '',\n      time_range: dir.time_range || '',\n      audio_url: ttsAudioMap[segId] || '',\n      image_main_url: productImageUrl,\n      model_image_url: modelImageUrl,\n      generate_body: JSON.stringify(generateBody),\n      avatar_prompt: dir.avatar_prompt || '',\n      broll_prompt: dir.broll_prompt || '',\n      interaction_prompt: dir.interaction_prompt || ''\n    }\n  });\n}\n\nreturn results;"
+      }
+    },
+    {
+      "id": "video-loop",
+      "name": "영상 세그먼트 순차 생성 루프",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        3300,
+        300
+      ],
+      "parameters": {
+        "batchSize": 1,
+        "options": {}
+      }
+    },
+    {
+      "id": "video-generate",
+      "name": "영상 생성 (kie.ai 통합)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3600,
+        300
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.kie.ai/api/v1/generate",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json.generate_body }}",
+        "options": {
+          "timeout": 120000
+        }
+      }
+    },
+    {
+      "id": "video-wait",
+      "name": "영상 대기 (60초)",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        3900,
+        300
+      ],
+      "parameters": {
+        "amount": 60,
+        "unit": "seconds"
+      }
+    },
+    {
+      "id": "video-poll",
+      "name": "영상 결과 폴링",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        4200,
+        300
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "=https://api.kie.ai/api/v1/task/{{ $('영상 생성 (kie.ai 통합)').first().json.task_id }}/status",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "timeout": 30000
+        }
+      }
+    },
+    {
+      "id": "video-done-check",
+      "name": "영상 완료 체크",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        4500,
+        300
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "video-status",
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "completed",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "video-re-wait",
+      "name": "영상 재대기 (30초)",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        4500,
+        500
+      ],
+      "parameters": {
+        "amount": 30,
+        "unit": "seconds"
+      }
+    },
+    {
+      "id": "video-result-collect",
+      "name": "결과 집계",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4800,
+        300
+      ],
+      "parameters": {
+        "jsCode": "const result = $input.first().json;\nconst staticData = $getWorkflowStaticData('global');\n\nif (!staticData.all_results) {\n  staticData.all_results = [];\n}\n\nfunction findVideoUrl(data) {\n  if (!data) return '';\n  if (typeof data === 'string' && data.match(/^https?:\\/\\/.+\\.(mp4|webm|mov)/i)) return data;\n  if (typeof data === 'object') {\n    const paths = [\n      data.video_url,\n      data.output ? data.output.video_url : undefined,\n      data.result ? data.result.video_url : undefined,\n      data.data ? data.data.video_url : undefined,\n      data.output ? data.output.url : undefined,\n      data.result ? data.result.url : undefined,\n      data.data ? data.data.url : undefined,\n      data.url,\n      data.video,\n      data.output ? data.output.video : undefined\n    ];\n    for (const p of paths) {\n      if (p && typeof p === 'string' && p.startsWith('http')) return p;\n    }\n    for (const key of Object.keys(data)) {\n      const val = data[key];\n      if (typeof val === 'string' && val.match(/^https?:\\/\\/.+\\.(mp4|webm|mov)/i)) return val;\n      if (typeof val === 'object' && val !== null) {\n        const found = findVideoUrl(val);\n        if (found) return found;\n      }\n    }\n  }\n  return '';\n}\n\nconst segData = $('영상 세그먼트 순차 생성 루프').first().json;\nconst videoUrl = findVideoUrl(result);\n\nstaticData.all_results.push({\n  segment_id: segData.segment_id,\n  section: segData.section,\n  segment_type: segData.segment_type,\n  tts_text: segData.tts_text,\n  time_range: segData.time_range,\n  video_url: videoUrl,\n  audio_url: segData.audio_url\n});\n\nstaticData.completed_segments = staticData.all_results.length;\n\nreturn [{\n  json: {\n    segment_id: segData.segment_id,\n    video_url: videoUrl,\n    completed: staticData.completed_segments,\n    total: staticData.total_segments\n  }\n}];"
+      }
+    },
+    {
+      "id": "srt-generate",
+      "name": "자막 SRT 생성",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        5100,
+        300
+      ],
+      "parameters": {
+        "jsCode": "const staticData = $getWorkflowStaticData('global');\nconst allResults = staticData.all_results || [];\n\nallResults.sort((a, b) => (a.segment_id || 0) - (b.segment_id || 0));\n\nlet srt = '';\nlet srtIndex = 1;\n\nfor (const seg of allResults) {\n  if (!seg.tts_text || seg.tts_text.trim() === '') continue;\n\n  const timeRange = seg.time_range || '';\n  const parts = timeRange.split('-');\n  let startSec = 0;\n  let endSec = 5;\n\n  if (parts.length === 2) {\n    const parseMM_SS = (str) => {\n      const p = str.trim().split(':');\n      return parseInt(p[0]) * 60 + parseInt(p[1]);\n    };\n    startSec = parseMM_SS(parts[0]);\n    endSec = parseMM_SS(parts[1]);\n  }\n\n  const formatSRT = (totalSec) => {\n    const h = String(Math.floor(totalSec / 3600)).padStart(2, '0');\n    const m = String(Math.floor((totalSec % 3600) / 60)).padStart(2, '0');\n    const s = String(totalSec % 60).padStart(2, '0');\n    return h + ':' + m + ':' + s + ',000';\n  };\n\n  srt += srtIndex + '\\n' + formatSRT(startSec) + ' --> ' + formatSRT(endSec) + '\\n' + seg.tts_text + '\\n\\n';\n  srtIndex++;\n}\n\nstaticData.srt_content = srt;\n\nreturn [{ json: { srt: srt, segments_count: allResults.length } }];"
+      }
+    },
+    {
+      "id": "clip-download-prep",
+      "name": "클립 다운로드 명령 생성",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        5400,
+        300
+      ],
+      "parameters": {
+        "jsCode": "const staticData = $getWorkflowStaticData('global');\nconst allResults = staticData.all_results || [];\n\nallResults.sort((a, b) => (a.segment_id || 0) - (b.segment_id || 0));\n\nconst commands = [];\nfor (let i = 0; i < allResults.length; i++) {\n  const url = allResults[i].video_url || '';\n  if (url) {\n    commands.push('curl -L -s -o /tmp/clip_' + (i + 1) + '.mp4 \"' + url + '\"');\n  }\n}\n\nconst bgmUrl = staticData.bgm_url || '';\nif (bgmUrl) {\n  commands.push('curl -L -s -o /tmp/bgm.mp3 \"' + bgmUrl + '\"');\n}\n\nconst srtContent = staticData.srt_content || '';\nconst escapedSrt = srtContent.replace(/'/g, \"'\\''\");\ncommands.push(\"echo '\" + escapedSrt + \"' > /tmp/subtitle.srt\");\n\nlet fileList = '';\nfor (let i = 0; i < allResults.length; i++) {\n  if (allResults[i].video_url) {\n    fileList += \"file '/tmp/clip_\" + (i + 1) + \".mp4'\\n\";\n  }\n}\nconst escapedFileList = fileList.replace(/'/g, \"'\\''\");\ncommands.push(\"echo '\" + escapedFileList + \"' > /tmp/clips.txt\");\n\nreturn [{ json: { download_command: commands.join(' && '), clip_count: allResults.length, has_bgm: !!bgmUrl } }];"
+      }
+    },
+    {
+      "id": "clip-download-exec",
+      "name": "클립 다운로드 실행",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        5700,
+        300
+      ],
+      "parameters": {
+        "jsCode": "const { execSync } = require('child_process');\nconst cmd = $input.first().json.download_command;\ntry {\n  const result = execSync(cmd, { timeout: 300000, maxBuffer: 50 * 1024 * 1024 });\n  return [{ json: { status: 'download_complete', output: result.toString().substring(0, 500), clip_count: $input.first().json.clip_count, has_bgm: $input.first().json.has_bgm } }];\n} catch(e) {\n  return [{ json: { status: 'download_error', error: e.message.substring(0, 500), clip_count: $input.first().json.clip_count, has_bgm: $input.first().json.has_bgm } }];\n}"
+      }
+    },
+    {
+      "id": "ffmpeg-prep",
+      "name": "FFmpeg 편집 명령 생성",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        6000,
+        300
+      ],
+      "parameters": {
+        "jsCode": "const staticData = $getWorkflowStaticData('global');\nconst prevJson = $input.first().json;\nconst hasBgm = prevJson.has_bgm || false;\nconst clipCount = prevJson.clip_count || 0;\n\nlet ffmpegCmd = 'ffmpeg -y -f concat -safe 0 -i /tmp/clips.txt';\n\nlet vf = 'scale=1080:1920:force_original_aspect_ratio=decrease,pad=1080:1920:(ow-iw)/2:(oh-ih)/2';\n\nconst srtContent = staticData.srt_content || '';\nif (srtContent.trim().length > 0) {\n  vf += \",subtitles=/tmp/subtitle.srt:force_style='FontName=NanumGothicBold,FontSize=22,PrimaryColour=&H00FFFFFF,OutlineColour=&H00000000,BackColour=&H80000000,Outline=2,Shadow=1,MarginV=60,Alignment=2'\";\n}\n\nffmpegCmd += ' -vf \"' + vf + '\"';\n\nif (hasBgm) {\n  ffmpegCmd += ' -i /tmp/bgm.mp3 -filter_complex \"[0:a]volume=1.0[voice];[1:a]volume=0.12,afade=t=in:d=1:st=0,afade=t=out:d=2:st=28[bgm];[voice][bgm]amix=inputs=2:duration=first[aout]\" -map 0:v -map \"[aout]\"';\n}\n\nffmpegCmd += ' -c:v libx264 -preset medium -crf 17 -pix_fmt yuv420p -c:a aac -b:a 192k -movflags +faststart /tmp/final_output.mp4';\n\nreturn [{ json: { ffmpeg_command: ffmpegCmd, has_bgm: hasBgm, clip_count: clipCount } }];"
+      }
+    },
+    {
+      "id": "ffmpeg-exec",
+      "name": "FFmpeg 편집 실행",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        6300,
+        300
+      ],
+      "parameters": {
+        "jsCode": "const { execSync } = require('child_process');\nconst cmd = $input.first().json.ffmpeg_command;\ntry {\n  const result = execSync(cmd, { timeout: 600000, maxBuffer: 50 * 1024 * 1024 });\n  return [{ json: { status: 'ffmpeg_complete', output: result.toString().substring(0, 500) } }];\n} catch(e) {\n  return [{ json: { status: 'ffmpeg_error', error: e.message.substring(0, 1000) } }];\n}"
+      }
+    },
+    {
+      "id": "read-final",
+      "name": "최종 영상 읽기",
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [
+        6600,
+        300
+      ],
+      "parameters": {
+        "operation": "read",
+        "fileSelector": "/tmp/final_output.mp4",
+        "options": {}
+      }
+    },
+    {
+      "id": "gdrive-upload",
+      "name": "Google Drive 업로드",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        6900,
+        300
+      ],
+      "parameters": {
+        "operation": "upload",
+        "name": "={{ $('기존 이미지 세팅').first().json.brand }}_{{ $('기존 이미지 세팅').first().json.product }}_{{ new Date().toISOString().split('T')[0] }}_AI_UGC_4K.mp4",
+        "folderId": {
+          "__rl": true,
+          "value": "",
+          "mode": "list",
+          "cachedResultName": ""
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "tts-bgm-merge",
+      "name": "TTS+BGM 동기화",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        2700,
+        100
+      ],
+      "parameters": {
+        "mode": "combine",
+        "combinationMode": "multiplex",
+        "options": {}
+      }
+    },
+    {
+      "id": "error-trigger",
+      "name": "Error Trigger",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        700
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "error-log",
+      "name": "에러 로그 기록",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        300,
+        700
+      ],
+      "parameters": {
+        "jsCode": "const error = $input.first().json;\nconst timestamp = new Date().toISOString();\n\nreturn [{\n  json: {\n    error_timestamp: timestamp,\n    error_message: error.message || 'Unknown error',\n    error_node: error.node || 'Unknown node',\n    error_workflow: error.workflow || {},\n    error_execution_id: error.execution ? error.execution.id : 'N/A'\n  }\n}];"
+      }
+    }
+  ],
+  "connections": {
+    "Form Trigger": {
+      "main": [
+        [
+          {
+            "node": "기존 이미지 세팅",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "기존 이미지 세팅": {
+      "main": [
+        [
+          {
+            "node": "Director AI 스크립트 기획",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Director AI 스크립트 기획": {
+      "main": [
+        [
+          {
+            "node": "Director 출력 파싱",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Director 출력 파싱": {
+      "main": [
+        [
+          {
+            "node": "TTS 세그먼트 필터링",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "BGM 필요 여부 체크",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "TTS 세그먼트 필터링": {
+      "main": [
+        [
+          {
+            "node": "TTS 순차 루프",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "TTS 순차 루프": {
+      "main": [
+        [
+          {
+            "node": "TTS 생성 (Typecast)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "TTS+BGM 동기화",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "TTS 생성 (Typecast)": {
+      "main": [
+        [
+          {
+            "node": "TTS URL 추출",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "TTS URL 추출": {
+      "main": [
+        [
+          {
+            "node": "TTS 순차 루프",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "BGM 필요 여부 체크": {
+      "main": [
+        [
+          {
+            "node": "BGM 생성 (Suno V4.5)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "BGM 스킵 (없음)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "BGM 생성 (Suno V4.5)": {
+      "main": [
+        [
+          {
+            "node": "BGM 대기 (30초)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "BGM 대기 (30초)": {
+      "main": [
+        [
+          {
+            "node": "BGM 결과 폴링",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "BGM 결과 폴링": {
+      "main": [
+        [
+          {
+            "node": "BGM 완료 체크",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "BGM 완료 체크": {
+      "main": [
+        [
+          {
+            "node": "BGM URL 저장",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "BGM 재대기 (30초)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "BGM 재대기 (30초)": {
+      "main": [
+        [
+          {
+            "node": "BGM 결과 폴링",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "BGM URL 저장": {
+      "main": [
+        [
+          {
+            "node": "TTS+BGM 동기화",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "BGM 스킵 (없음)": {
+      "main": [
+        [
+          {
+            "node": "TTS+BGM 동기화",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "TTS+BGM 동기화": {
+      "main": [
+        [
+          {
+            "node": "통합 데이터 정리",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "통합 데이터 정리": {
+      "main": [
+        [
+          {
+            "node": "영상 세그먼트 순차 생성 루프",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "영상 세그먼트 순차 생성 루프": {
+      "main": [
+        [
+          {
+            "node": "영상 생성 (kie.ai 통합)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "자막 SRT 생성",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "영상 생성 (kie.ai 통합)": {
+      "main": [
+        [
+          {
+            "node": "영상 대기 (60초)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "영상 대기 (60초)": {
+      "main": [
+        [
+          {
+            "node": "영상 결과 폴링",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "영상 결과 폴링": {
+      "main": [
+        [
+          {
+            "node": "영상 완료 체크",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "영상 완료 체크": {
+      "main": [
+        [
+          {
+            "node": "결과 집계",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "영상 재대기 (30초)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "영상 재대기 (30초)": {
+      "main": [
+        [
+          {
+            "node": "영상 결과 폴링",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "결과 집계": {
+      "main": [
+        [
+          {
+            "node": "영상 세그먼트 순차 생성 루프",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "자막 SRT 생성": {
+      "main": [
+        [
+          {
+            "node": "클립 다운로드 명령 생성",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "클립 다운로드 명령 생성": {
+      "main": [
+        [
+          {
+            "node": "클립 다운로드 실행",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "클립 다운로드 실행": {
+      "main": [
+        [
+          {
+            "node": "FFmpeg 편집 명령 생성",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "FFmpeg 편집 명령 생성": {
+      "main": [
+        [
+          {
+            "node": "FFmpeg 편집 실행",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "FFmpeg 편집 실행": {
+      "main": [
+        [
+          {
+            "node": "최종 영상 읽기",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "최종 영상 읽기": {
+      "main": [
+        [
+          {
+            "node": "Google Drive 업로드",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Error Trigger": {
+      "main": [
+        [
+          {
+            "node": "에러 로그 기록",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "saveExecutionProgress": true
+  },
+  "active": false
+}

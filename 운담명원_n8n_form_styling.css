@@ -1,0 +1,225 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600;700;900&family=Noto+Sans+KR:wght@300;400;500;700&display=swap');
+
+body {
+  font-family: 'Noto Sans KR', sans-serif !important;
+  background-color: #f5f0e8 !important;
+  margin: 0;
+  padding: 20px;
+}
+
+/* ===== 전체 폼 컨테이너 ===== */
+.n8n-form-container,
+form,
+.form-container {
+  max-width: 520px !important;
+  margin: 0 auto !important;
+  background: #faf8f4 !important;
+  border-radius: 0 !important;
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.12) !important;
+  overflow: hidden;
+}
+
+/* ===== 헤더 / 타이틀 영역 ===== */
+.n8n-form-title,
+h1,
+.form-title {
+  font-family: 'Noto Serif KR', serif !important;
+  font-size: 38px !important;
+  font-weight: 900 !important;
+  color: #ffffff !important;
+  letter-spacing: 10px !important;
+  text-align: center !important;
+  background: #4a5a3c !important;
+  padding: 48px 32px 20px !important;
+  margin: 0 !important;
+  display: block !important;
+}
+
+.n8n-form-description,
+.form-description {
+  font-family: 'Noto Sans KR', sans-serif !important;
+  font-size: 12px !important;
+  color: rgba(255, 255, 255, 0.55) !important;
+  letter-spacing: 5px !important;
+  text-transform: uppercase !important;
+  text-align: center !important;
+  background: #4a5a3c !important;
+  padding: 0 32px 44px !important;
+  margin: 0 !important;
+}
+
+/* ===== 폼 필드 영역 ===== */
+.n8n-form-fields,
+.form-fields,
+.form-body {
+  padding: 32px !important;
+  background: #faf8f4 !important;
+}
+
+/* ===== 라벨 ===== */
+label,
+.n8n-form-label,
+.form-label {
+  font-family: 'Noto Sans KR', sans-serif !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  color: #3d3d3d !important;
+  margin-bottom: 6px !important;
+  letter-spacing: 0.3px !important;
+}
+
+/* ===== 인풋 / 셀렉트 / 텍스트에리어 공통 ===== */
+input[type="text"],
+input[type="number"],
+input[type="email"],
+input[type="tel"],
+input[type="date"],
+select,
+textarea,
+.n8n-form-input,
+.form-input {
+  width: 100% !important;
+  padding: 12px 14px !important;
+  border: 1px solid #d4cfc4 !important;
+  border-radius: 4px !important;
+  font-family: 'Noto Sans KR', sans-serif !important;
+  font-size: 14px !important;
+  color: #2d2d2d !important;
+  background: #ffffff !important;
+  transition: border-color 0.2s, box-shadow 0.2s !important;
+  outline: none !important;
+  box-sizing: border-box !important;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: #4a5a3c !important;
+  box-shadow: 0 0 0 3px rgba(74, 90, 60, 0.1) !important;
+}
+
+textarea {
+  min-height: 90px !important;
+  resize: vertical !important;
+  line-height: 1.6 !important;
+}
+
+::placeholder {
+  color: #b8b2a4 !important;
+  font-size: 13px !important;
+}
+
+/* ===== 라디오 / 체크박스 ===== */
+input[type="radio"],
+input[type="checkbox"] {
+  accent-color: #4a5a3c !important;
+}
+
+/* ===== 드롭다운 화살표 ===== */
+select {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%234a5a3c' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 12px center !important;
+  background-size: 16px !important;
+  padding-right: 36px !important;
+  cursor: pointer !important;
+}
+
+/* ===== 폼 그룹 간격 ===== */
+.n8n-form-field,
+.form-group,
+.form-field {
+  margin-bottom: 20px !important;
+}
+
+/* ===== 제출 버튼 ===== */
+button[type="submit"],
+.n8n-form-submit,
+.form-submit,
+.btn-submit,
+input[type="submit"] {
+  width: 100% !important;
+  padding: 16px !important;
+  background: #4a5a3c !important;
+  color: #ffffff !important;
+  border: none !important;
+  border-radius: 4px !important;
+  font-family: 'Noto Serif KR', serif !important;
+  font-size: 16px !important;
+  font-weight: 600 !important;
+  letter-spacing: 4px !important;
+  cursor: pointer !important;
+  transition: background 0.2s !important;
+  margin-top: 12px !important;
+}
+
+button[type="submit"]:hover,
+.n8n-form-submit:hover,
+input[type="submit"]:hover {
+  background: #3d4d31 !important;
+}
+
+/* ===== 필수 표시 (*) ===== */
+.required,
+.n8n-form-required {
+  color: #c4392d !important;
+}
+
+/* ===== 구분선 ===== */
+hr {
+  border: none !important;
+  height: 1px !important;
+  background: linear-gradient(to right, transparent, #c4b99a, transparent) !important;
+  margin: 28px 0 !important;
+}
+
+/* ===== n8n 푸터 / 워터마크 숨기기 ===== */
+.n8n-form-footer,
+.form-footer-default,
+[class*="footer"],
+[class*="powered"] {
+  background: #4a5a3c !important;
+  color: rgba(255, 255, 255, 0.45) !important;
+  text-align: center !important;
+  padding: 20px 32px !important;
+  font-size: 11px !important;
+  letter-spacing: 1px !important;
+}
+
+/* ===== 에러 메시지 ===== */
+.error-message,
+.n8n-form-error,
+.form-error {
+  color: #c4392d !important;
+  font-size: 12px !important;
+  margin-top: 4px !important;
+}
+
+/* ===== 모바일 반응형 ===== */
+@media (max-width: 560px) {
+  body {
+    padding: 0 !important;
+  }
+
+  .n8n-form-title,
+  h1,
+  .form-title {
+    font-size: 30px !important;
+    letter-spacing: 6px !important;
+    padding: 36px 20px 16px !important;
+  }
+
+  .n8n-form-description,
+  .form-description {
+    padding: 0 20px 32px !important;
+    letter-spacing: 3px !important;
+  }
+
+  .n8n-form-fields,
+  .form-fields,
+  .form-body {
+    padding: 20px !important;
+  }
+}
